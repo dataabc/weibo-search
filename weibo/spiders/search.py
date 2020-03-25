@@ -168,11 +168,11 @@ class SearchSpider(scrapy.Spider):
                     'div[2]/a/@nick-name').extract_first()
                 weibo['txt'] = sel.xpath('.//p[@class="txt"]')[0].xpath(
                     'string(.)').extract_first()
-                comment_count = sel.xpath(
+                comments_count = sel.xpath(
                     './/a[@action-type="feed_list_comment"]/text()'
                 ).extract_first()
-                comment_count = re.findall(r'\d+', comment_count)
-                weibo['comment_count'] = comment_count[
-                    0] if comment_count else '0'
+                comments_count = re.findall(r'\d+', comments_count)
+                weibo['comments_count'] = comments_count[
+                    0] if comments_count else '0'
                 print(weibo)
                 yield weibo
