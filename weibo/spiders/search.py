@@ -171,13 +171,13 @@ class SearchSpider(scrapy.Spider):
                     './/a[@action-type="feed_list_forward"]/text()'
                 ).extract_first()
                 weibo['reposts_count'] = reposts_count
-                reposts_count = re.findall(r'\d+', reposts_count)
+                reposts_count = re.findall(r'\d+.*', reposts_count)
                 weibo['reposts_count'] = reposts_count[
                     0] if reposts_count else '0'
                 comments_count = sel.xpath(
                     './/a[@action-type="feed_list_comment"]/text()'
                 ).extract_first()
-                comments_count = re.findall(r'\d+', comments_count)
+                comments_count = re.findall(r'\d+.*', comments_count)
                 weibo['comments_count'] = comments_count[
                     0] if comments_count else '0'
                 attitudes_count = sel.xpath(
