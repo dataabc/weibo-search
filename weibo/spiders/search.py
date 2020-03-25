@@ -146,7 +146,6 @@ class SearchSpider(scrapy.Spider):
         """解析一页搜索结果的信息"""
         for weibo in self.parse_weibo(response):
             yield weibo
-
         next_url = response.xpath('//a[@class="next"]/@href').extract_first()
         if next_url:
             yield scrapy.Request(url=next_url, callback=self.parse_page)
@@ -181,5 +180,10 @@ class SearchSpider(scrapy.Spider):
                 comments_count = re.findall(r'\d+', comments_count)
                 weibo['comments_count'] = comments_count[
                     0] if comments_count else '0'
+                attitudes_count = sel.xpath(
+                    './/a[@action-type="feed_list_like"]/em/text()'
+                ).extract_first()
+                weibo['attitudes_count'] = (attitudes_count
+                                            if attitudes_count else '0')
                 print(weibo)
                 yield weibo

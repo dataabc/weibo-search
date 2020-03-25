@@ -16,3 +16,4 @@ class WeiboItem(scrapy.Item):
     txt = scrapy.Field()
     reposts_count = scrapy.Field()
     comments_count = scrapy.Field()
+    attitudes_count = scrapy.Field()
