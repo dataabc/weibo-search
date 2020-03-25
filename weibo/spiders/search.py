@@ -166,7 +166,8 @@ class SearchSpider(scrapy.Spider):
                 weibo['nick_name'] = info[0].xpath(
                     'div[2]/a/@nick-name').extract_first()
                 weibo['txt'] = sel.xpath('.//p[@class="txt"]')[0].xpath(
-                    'string(.)').extract_first()
+                    'string(.)').extract_first().replace('\u200b', '').replace(
+                        '\ue627', '')
                 reposts_count = sel.xpath(
                     './/a[@action-type="feed_list_forward"]/text()'
                 ).extract_first()
