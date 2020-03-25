@@ -168,6 +168,13 @@ class SearchSpider(scrapy.Spider):
                     'div[2]/a/@nick-name').extract_first()
                 weibo['txt'] = sel.xpath('.//p[@class="txt"]')[0].xpath(
                     'string(.)').extract_first()
+                reposts_count = sel.xpath(
+                    './/a[@action-type="feed_list_forward"]/text()'
+                ).extract_first()
+                weibo['reposts_count'] = reposts_count
+                reposts_count = re.findall(r'\d+', reposts_count)
+                weibo['reposts_count'] = reposts_count[
+                    0] if reposts_count else '0'
                 comments_count = sel.xpath(
                     './/a[@action-type="feed_list_comment"]/text()'
                 ).extract_first()
