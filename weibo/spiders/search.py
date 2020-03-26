@@ -221,5 +221,12 @@ class SearchSpider(scrapy.Spider):
                 source = sel.xpath('(.//p[@class="from"])[last()]/a[2]/text()'
                                    ).extract_first()
                 weibo['source'] = source if source else ''
+
+                retweet_sel = sel.xpath('(.//div[@class="card-comment"])')
+                if retweet_sel:
+                    retweet_id = retweet_sel[0].xpath(
+                        './/a[@action-type="feed_list_like"]/@action-data'
+                    ).extract_first()[4:]
+                    weibo['retweet_id'] = retweet_id
                 print(weibo)
                 yield weibo
