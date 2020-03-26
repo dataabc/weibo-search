@@ -218,8 +218,8 @@ class SearchSpider(scrapy.Spider):
                     '(.//p[@class="from"])[last()]/a[1]/text()').extract_first(
                     ).replace(' ', '').replace('\n', '').split('前')[0]
                 weibo['created_at'] = util.standardize_date(created_at)
-                source = sel.xpath(
-                    './/p[@class="from"]/a[2]/text()').extract_first()
-                weibo['source'] = source
+                source = sel.xpath('(.//p[@class="from"])[last()]/a[2]/text()'
+                                   ).extract_first()
+                weibo['source'] = source if source else ''
                 print(weibo)
                 yield weibo
