@@ -26,8 +26,12 @@ class SearchSpider(scrapy.Spider):
 
     def parse(self, response):
         keyword = response.meta.get('keyword')
+        is_empty = response.xpath(
+            '//div[@class="card card-no-result s-pt20b40"]')
         page_count = len(response.xpath('//ul[@class="s-scroll"]/li'))
-        if page_count < 50:
+        if is_empty:
+            print('当前页面搜索结果为空')
+        elif page_count < 50:
             # 解析当前页面
             for weibo in self.parse_weibo(response):
                 yield weibo
@@ -56,9 +60,13 @@ class SearchSpider(scrapy.Spider):
     def parse_by_day(self, response):
         """以天为单位筛选"""
         keyword = response.meta.get('keyword')
+        is_empty = response.xpath(
+            '//div[@class="card card-no-result s-pt20b40"]')
         date = response.meta.get('date')
         page_count = len(response.xpath('//ul[@class="s-scroll"]/li'))
-        if page_count < 50:
+        if is_empty:
+            print('当前页面搜索结果为空')
+        elif page_count < 50:
             # 解析当前页面
             for weibo in self.parse_weibo(response):
                 yield weibo
@@ -90,10 +98,14 @@ class SearchSpider(scrapy.Spider):
     def parse_by_hour(self, response):
         """以小时为单位筛选"""
         keyword = response.meta.get('keyword')
+        is_empty = response.xpath(
+            '//div[@class="card card-no-result s-pt20b40"]')
         start_time = response.meta.get('start_time')
         end_time = response.meta.get('end_time')
         page_count = len(response.xpath('//ul[@class="s-scroll"]/li'))
-        if page_count < 50:
+        if is_empty:
+            print('当前页面搜索结果为空')
+        elif page_count < 50:
             # 解析当前页面
             for weibo in self.parse_weibo(response):
                 yield weibo
@@ -119,11 +131,15 @@ class SearchSpider(scrapy.Spider):
     def parse_by_hour_province(self, response):
         """以小时和直辖市/省为单位筛选"""
         keyword = response.meta.get('keyword')
+        is_empty = response.xpath(
+            '//div[@class="card card-no-result s-pt20b40"]')
         start_time = response.meta.get('start_time')
         end_time = response.meta.get('end_time')
         province = response.meta.get('province')
         page_count = len(response.xpath('//ul[@class="s-scroll"]/li'))
-        if page_count < 50:
+        if is_empty:
+            print('当前页面搜索结果为空')
+        elif page_count < 50:
             # 解析当前页面
             for weibo in self.parse_weibo(response):
                 yield weibo
@@ -149,12 +165,18 @@ class SearchSpider(scrapy.Spider):
 
     def parse_page(self, response):
         """解析一页搜索结果的信息"""
-        for weibo in self.parse_weibo(response):
-            yield weibo
-        next_url = response.xpath('//a[@class="next"]/@href').extract_first()
-        if next_url:
-            next_url = self.base_url + next_url
-            yield scrapy.Request(url=next_url, callback=self.parse_page)
+        is_empty = response.xpath(
+            '//div[@class="card card-no-result s-pt20b40"]')
+        if is_empty:
+            print('当前页面搜索结果为空')
+        else:
+            for weibo in self.parse_weibo(response):
+                yield weibo
+            next_url = response.xpath(
+                '//a[@class="next"]/@href').extract_first()
+            if next_url:
+                next_url = self.base_url + next_url
+                yield scrapy.Request(url=next_url, callback=self.parse_page)
 
     def parse_weibo(self, response):
         """解析网页中的微博信息"""
