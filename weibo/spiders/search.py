@@ -221,7 +221,7 @@ class SearchSpider(scrapy.Spider):
                                    ).extract_first()
                 weibo['source'] = source if source else ''
 
-                retweet_sel = sel.xpath('(.//div[@class="card-comment"])')
+                retweet_sel = sel.xpath('.//div[@class="card-comment"]')
                 if retweet_sel:
                     retweet = WeiboItem()
                     retweet_id = retweet_sel[0].xpath(
@@ -236,7 +236,7 @@ class SearchSpider(scrapy.Spider):
                     retweet['nick_name'] = info.xpath(
                         '@nick-name').extract_first()
                     retweet['txt'] = retweet_sel[0].xpath(
-                        '(.//p[@class="txt"])[last()]')[0].xpath(
+                        './/p[@class="txt"]')[0].xpath(
                             'string(.)').extract_first().replace(
                                 '\u200b', '').replace('\ue627', '')
                     reposts_count = retweet_sel[0].xpath(
@@ -256,6 +256,12 @@ class SearchSpider(scrapy.Spider):
                     ).extract_first()
                     retweet['attitudes_count'] = (attitudes_count
                                                   if attitudes_count else '0')
+                    created_at = sel.xpath('.//p[@class="from"]/a[1]/text()'
+                                           ).extract_first().replace(
+                                               ' ',
+                                               '').replace('\n',
+                                                           '').split('前')[0]
+                    retweet['created_at'] = util.standardize_date(created_at)
                     yield retweet
                     weibo['retweet_id'] = retweet_id
                 print(weibo)
