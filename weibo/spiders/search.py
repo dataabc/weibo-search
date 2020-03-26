@@ -215,8 +215,8 @@ class SearchSpider(scrapy.Spider):
                 weibo['attitudes_count'] = (attitudes_count
                                             if attitudes_count else '0')
                 created_at = sel.xpath(
-                    './/p[@class="from"]/a[1]/text()').extract_first().replace(
-                        ' ', '').replace('\n', '').split('前')[0]
+                    '(.//p[@class="from"])[last()]/a[1]/text()').extract_first(
+                    ).replace(' ', '').replace('\n', '').split('前')[0]
                 weibo['created_at'] = util.standardize_date(created_at)
                 source = sel.xpath(
                     './/p[@class="from"]/a[2]/text()').extract_first()
