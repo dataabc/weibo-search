@@ -31,9 +31,10 @@ class SearchSpider(scrapy.Spider):
             # 解析当前页面
             for weibo in self.parse_weibo(response):
                 yield weibo
-            next_url = self.base_url + response.xpath(
+            next_url = response.xpath(
                 '//a[@class="next"]/@href').extract_first()
             if next_url:
+                next_url = self.base_url + next_url
                 yield scrapy.Request(url=next_url, callback=self.parse_page)
         else:
             start_date = datetime.strptime(self.start_date, '%Y-%m-%d')
@@ -61,9 +62,10 @@ class SearchSpider(scrapy.Spider):
             # 解析当前页面
             for weibo in self.parse_weibo(response):
                 yield weibo
-            next_url = self.base_url + response.xpath(
+            next_url = response.xpath(
                 '//a[@class="next"]/@href').extract_first()
             if next_url:
+                next_url = self.base_url + next_url
                 yield scrapy.Request(url=next_url, callback=self.parse_page)
         else:
             start_date_str = date + '-0'
@@ -95,9 +97,10 @@ class SearchSpider(scrapy.Spider):
             # 解析当前页面
             for weibo in self.parse_weibo(response):
                 yield weibo
-            next_url = self.base_url + response.xpath(
+            next_url = response.xpath(
                 '//a[@class="next"]/@href').extract_first()
             if next_url:
+                next_url = self.base_url + next_url
                 yield scrapy.Request(url=next_url, callback=self.parse_page)
         else:
             for province in province_list:
@@ -124,9 +127,10 @@ class SearchSpider(scrapy.Spider):
             # 解析当前页面
             for weibo in self.parse_weibo(response):
                 yield weibo
-            next_url = self.base_url + response.xpath(
+            next_url = response.xpath(
                 '//a[@class="next"]/@href').extract_first()
             if next_url:
+                next_url = self.base_url + next_url
                 yield scrapy.Request(url=next_url, callback=self.parse_page)
         else:
             for city in province['city_list']:
@@ -149,6 +153,7 @@ class SearchSpider(scrapy.Spider):
             yield weibo
         next_url = response.xpath('//a[@class="next"]/@href').extract_first()
         if next_url:
+            next_url = self.base_url + next_url
             yield scrapy.Request(url=next_url, callback=self.parse_page)
 
     def parse_weibo(self, response):
