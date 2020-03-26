@@ -199,7 +199,6 @@ class SearchSpider(scrapy.Spider):
                 reposts_count = sel.xpath(
                     './/a[@action-type="feed_list_forward"]/text()'
                 ).extract_first()
-                weibo['reposts_count'] = reposts_count
                 reposts_count = re.findall(r'\d+.*', reposts_count)
                 weibo['reposts_count'] = reposts_count[
                     0] if reposts_count else '0'
@@ -240,6 +239,12 @@ class SearchSpider(scrapy.Spider):
                         '(.//p[@class="txt"])[last()]')[0].xpath(
                             'string(.)').extract_first().replace(
                                 '\u200b', '').replace('\ue627', '')
+                    reposts_count = retweet_sel[0].xpath(
+                        './/ul[@class="act s-fr"]/li/a[1]/text()'
+                    ).extract_first()
+                    reposts_count = re.findall(r'\d+.*', reposts_count)
+                    retweet['reposts_count'] = reposts_count[
+                        0] if reposts_count else '0'
                     yield retweet
                     weibo['retweet_id'] = retweet_id
                 print(weibo)
