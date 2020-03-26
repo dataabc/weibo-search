@@ -18,3 +18,4 @@ class WeiboItem(scrapy.Item):
     comments_count = scrapy.Field()
     attitudes_count = scrapy.Field()
     created_at = scrapy.Field()
+    source = scrapy.Field()
