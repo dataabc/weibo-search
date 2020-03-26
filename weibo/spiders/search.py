@@ -234,6 +234,8 @@ class SearchSpider(scrapy.Spider):
                     )[0]
                     retweet['user_id'] = info.xpath(
                         '@href').extract_first().split('/')[-1]
+                    retweet['nick_name'] = info.xpath(
+                        '@nick-name').extract_first()
                     yield retweet
                     weibo['retweet_id'] = retweet_id
                 print(weibo)
