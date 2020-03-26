@@ -224,9 +224,17 @@ class SearchSpider(scrapy.Spider):
 
                 retweet_sel = sel.xpath('(.//div[@class="card-comment"])')
                 if retweet_sel:
+                    retweet = WeiboItem()
                     retweet_id = retweet_sel[0].xpath(
                         './/a[@action-type="feed_list_like"]/@action-data'
                     ).extract_first()[4:]
+                    retweet['id'] = retweet_id
+                    info = retweet_sel[0].xpath(
+                        './/div[@node-type="feed_list_forwardContent"]/a[1]'
+                    )[0]
+                    retweet['user_id'] = info.xpath(
+                        '@href').extract_first().split('/')[-1]
+                    yield retweet
                     weibo['retweet_id'] = retweet_id
                 print(weibo)
                 yield weibo
