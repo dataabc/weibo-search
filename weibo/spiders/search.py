@@ -245,6 +245,17 @@ class SearchSpider(scrapy.Spider):
                     reposts_count = re.findall(r'\d+.*', reposts_count)
                     retweet['reposts_count'] = reposts_count[
                         0] if reposts_count else '0'
+                    comments_count = retweet_sel[0].xpath(
+                        './/ul[@class="act s-fr"]/li[2]/a[1]/text()'
+                    ).extract_first()
+                    comments_count = re.findall(r'\d+.*', comments_count)
+                    retweet['comments_count'] = comments_count[
+                        0] if comments_count else '0'
+                    attitudes_count = retweet_sel[0].xpath(
+                        './/a[@action-type="feed_list_like"]/em/text()'
+                    ).extract_first()
+                    retweet['attitudes_count'] = (attitudes_count
+                                                  if attitudes_count else '0')
                     yield retweet
                     weibo['retweet_id'] = retweet_id
                 print(weibo)
