@@ -256,12 +256,13 @@ class SearchSpider(scrapy.Spider):
                     ).extract_first()
                     retweet['attitudes_count'] = (attitudes_count
                                                   if attitudes_count else '0')
-                    created_at = sel.xpath('.//p[@class="from"]/a[1]/text()'
-                                           ).extract_first().replace(
-                                               ' ',
-                                               '').replace('\n',
-                                                           '').split('前')[0]
+                    created_at = retweet_sel[0].xpath(
+                        './/p[@class="from"]/a[1]/text()').extract_first(
+                        ).replace(' ', '').replace('\n', '').split('前')[0]
                     retweet['created_at'] = util.standardize_date(created_at)
+                    source = retweet_sel[0].xpath(
+                        './/p[@class="from"]/a[2]/text()').extract_first()
+                    retweet['source'] = source if source else ''
                     yield retweet
                     weibo['retweet_id'] = retweet_id
                 print(weibo)
