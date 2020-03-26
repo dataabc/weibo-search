@@ -187,7 +187,9 @@ class SearchSpider(scrapy.Spider):
             if info:
                 weibo = WeiboItem()
                 weibo['id'] = sel.xpath('@mid').extract_first()
-
+                weibo['bid'] = sel.xpath(
+                    '(.//p[@class="from"])[last()]/a[1]/@href').extract_first(
+                    ).split('/')[-1].split('?')[0]
                 weibo['user_id'] = info[0].xpath(
                     'div[2]/a/@href').extract_first().split('?')[0].split(
                         '/')[-1]

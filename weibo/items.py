@@ -11,6 +11,7 @@ import scrapy
 class WeiboItem(scrapy.Item):
     # define the fields for your item here like:
     id = scrapy.Field()
+    bid = scrapy.Field()
     user_id = scrapy.Field()
     nick_name = scrapy.Field()
     txt = scrapy.Field()
