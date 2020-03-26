@@ -230,6 +230,9 @@ class SearchSpider(scrapy.Spider):
                         './/a[@action-type="feed_list_like"]/@action-data'
                     ).extract_first()[4:]
                     retweet['id'] = retweet_id
+                    retweet['bid'] = retweet_sel[0].xpath(
+                        './/p[@class="from"]/a/@href').extract_first().split(
+                            '/')[-1].split('?')[0]
                     info = retweet_sel[0].xpath(
                         './/div[@node-type="feed_list_forwardContent"]/a[1]'
                     )[0]
