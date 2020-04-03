@@ -303,6 +303,8 @@ class SearchSpider(scrapy.Spider):
                                 '\u200b', '').replace('\ue627', '')
                     retweet['at_users'] = self.get_at_users(
                         retweet_sel[0].xpath('.//p[@class="txt"]')[0])
+                    retweet['topics'] = self.get_topics(
+                        retweet_sel[0].xpath('.//p[@class="txt"]')[0])
                     reposts_count = retweet_sel[0].xpath(
                         './/ul[@class="act s-fr"]/li/a[1]/text()'
                     ).extract_first()
