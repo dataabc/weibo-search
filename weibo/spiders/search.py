@@ -179,6 +179,16 @@ class SearchSpider(scrapy.Spider):
                 next_url = self.base_url + next_url
                 yield scrapy.Request(url=next_url, callback=self.parse_page)
 
+    def get_location(self, selector):
+        """获取微博发布位置"""
+        a_list = selector.xpath('.//a')
+        location = ''
+        for a in a_list:
+            if a.xpath('./i[@class="wbicon"]'):
+                location = a.xpath('string(.)').extract_first()[1:]
+                break
+        return location
+
     def get_at_users(self, selector):
         """获取微博中@的用户昵称"""
         a_list = selector.xpath('.//a')
@@ -230,6 +240,8 @@ class SearchSpider(scrapy.Spider):
                 weibo['txt'] = sel.xpath('.//p[@class="txt"]')[0].xpath(
                     'string(.)').extract_first().replace('\u200b', '').replace(
                         '\ue627', '')
+                weibo['location'] = self.get_location(
+                    sel.xpath('.//p[@class="txt"]')[0])
                 weibo['at_users'] = self.get_at_users(
                     sel.xpath('.//p[@class="txt"]')[0])
                 weibo['topics'] = self.get_topics(
