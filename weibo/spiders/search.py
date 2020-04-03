@@ -222,8 +222,24 @@ class SearchSpider(scrapy.Spider):
                 source = sel.xpath('(.//p[@class="from"])[last()]/a[2]/text()'
                                    ).extract_first()
                 weibo['source'] = source if source else ''
-
+                is_exist_pic = sel.xpath(
+                    './/div[@class="media media-piclist"]')
+                pics = ''
+                if is_exist_pic:
+                    pics = is_exist_pic[0].xpath('ul[1]/li/img/@src').extract()
+                    pics = [pic[2:] for pic in pics]
+                    pics = [
+                        re.sub(r'\.jpg', '.gif', pic, 1)
+                        if 'thumb150' in pic else pic for pic in pics
+                    ]
+                    pics = [
+                        re.sub(r'/.*?/', '/large/', pic, 1) for pic in pics
+                    ]
                 retweet_sel = sel.xpath('.//div[@class="card-comment"]')
+                if not retweet_sel:
+                    weibo['pics'] = pics
+                else:
+                    weibo['pics'] = ''
                 if retweet_sel:
                     retweet = WeiboItem()
                     retweet_id = retweet_sel[0].xpath(
@@ -268,6 +284,7 @@ class SearchSpider(scrapy.Spider):
                     source = retweet_sel[0].xpath(
                         './/p[@class="from"]/a[2]/text()').extract_first()
                     retweet['source'] = source if source else ''
+                    retweet['pics'] = pics
                     yield retweet
                     weibo['retweet_id'] = retweet_id
                 print(weibo)

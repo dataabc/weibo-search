@@ -20,4 +20,5 @@ class WeiboItem(scrapy.Item):
     attitudes_count = scrapy.Field()
     created_at = scrapy.Field()
     source = scrapy.Field()
+    pics = scrapy.Field()
     retweet_id = scrapy.Field()
