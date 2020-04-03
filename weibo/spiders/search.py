@@ -313,6 +313,8 @@ class SearchSpider(scrapy.Spider):
                         './/p[@class="txt"]')[0].xpath(
                             'string(.)').extract_first().replace(
                                 '\u200b', '').replace('\ue627', '')
+                    retweet['location'] = self.get_location(
+                        retweet_sel[0].xpath('.//p[@class="txt"]')[0])
                     retweet['at_users'] = self.get_at_users(
                         retweet_sel[0].xpath('.//p[@class="txt"]')[0])
                     retweet['topics'] = self.get_topics(
