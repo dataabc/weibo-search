@@ -21,4 +21,5 @@ class WeiboItem(scrapy.Item):
     created_at = scrapy.Field()
     source = scrapy.Field()
     pics = scrapy.Field()
+    video_url = scrapy.Field()
     retweet_id = scrapy.Field()
