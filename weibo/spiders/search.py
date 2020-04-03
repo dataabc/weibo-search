@@ -216,9 +216,8 @@ class SearchSpider(scrapy.Spider):
                 weibo['txt'] = sel.xpath('.//p[@class="txt"]')[0].xpath(
                     'string(.)').extract_first().replace('\u200b', '').replace(
                         '\ue627', '')
-                at_users = self.get_at_users(
+                weibo['at_users'] = self.get_at_users(
                     sel.xpath('.//p[@class="txt"]')[0])
-                weibo['at_users'] = at_users
                 reposts_count = sel.xpath(
                     './/a[@action-type="feed_list_forward"]/text()'
                 ).extract_first()
@@ -286,6 +285,8 @@ class SearchSpider(scrapy.Spider):
                         './/p[@class="txt"]')[0].xpath(
                             'string(.)').extract_first().replace(
                                 '\u200b', '').replace('\ue627', '')
+                    retweet['at_users'] = self.get_at_users(
+                        retweet_sel[0].xpath('.//p[@class="txt"]')[0])
                     reposts_count = retweet_sel[0].xpath(
                         './/ul[@class="act s-fr"]/li/a[1]/text()'
                     ).extract_first()
