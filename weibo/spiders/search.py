@@ -229,10 +229,6 @@ class SearchSpider(scrapy.Spider):
                     pics = is_exist_pic[0].xpath('ul[1]/li/img/@src').extract()
                     pics = [pic[2:] for pic in pics]
                     pics = [
-                        re.sub(r'\.jpg', '.gif', pic, 1)
-                        if 'thumb150' in pic else pic for pic in pics
-                    ]
-                    pics = [
                         re.sub(r'/.*?/', '/large/', pic, 1) for pic in pics
                     ]
                 retweet_sel = sel.xpath('.//div[@class="card-comment"]')
