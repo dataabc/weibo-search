@@ -179,6 +179,23 @@ class SearchSpider(scrapy.Spider):
                 next_url = self.base_url + next_url
                 yield scrapy.Request(url=next_url, callback=self.parse_page)
 
+    def get_at_users(self, selector):
+        """获取微博中@的用户昵称"""
+        a_list = selector.xpath('.//a')
+        at_users = ''
+        at_list = []
+        for a in a_list:
+            if len(unquote(a.xpath('@href').extract_first())) > 14 and len(
+                    a.xpath('string(.)').extract_first()) > 1:
+                if unquote(a.xpath('@href').extract_first())[14:] == a.xpath(
+                        'string(.)').extract_first()[1:]:
+                    at_user = a.xpath('string(.)').extract_first()[1:]
+                    if at_user not in at_list:
+                        at_list.append(at_user)
+        if at_list:
+            at_users = ','.join(at_list)
+        return at_users
+
     def parse_weibo(self, response):
         """解析网页中的微博信息"""
         for sel in response.xpath("//div[@class='card-wrap']"):
@@ -199,6 +216,9 @@ class SearchSpider(scrapy.Spider):
                 weibo['txt'] = sel.xpath('.//p[@class="txt"]')[0].xpath(
                     'string(.)').extract_first().replace('\u200b', '').replace(
                         '\ue627', '')
+                at_users = self.get_at_users(
+                    sel.xpath('.//p[@class="txt"]')[0])
+                weibo['at_users'] = at_users
                 reposts_count = sel.xpath(
                     './/a[@action-type="feed_list_forward"]/text()'
                 ).extract_first()

@@ -15,6 +15,7 @@ class WeiboItem(scrapy.Item):
     user_id = scrapy.Field()
     nick_name = scrapy.Field()
     txt = scrapy.Field()
+    at_users = scrapy.Field()
     reposts_count = scrapy.Field()
     comments_count = scrapy.Field()
     attitudes_count = scrapy.Field()
