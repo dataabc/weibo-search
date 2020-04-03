@@ -196,6 +196,20 @@ class SearchSpider(scrapy.Spider):
             at_users = ','.join(at_list)
         return at_users
 
+    def get_topics(self, selector):
+        """获取参与的微博话题"""
+        a_list = selector.xpath('.//a')
+        topics = ''
+        topic_list = []
+        for a in a_list:
+            text = a.xpath('string(.)').extract_first()
+            if len(text) > 2 and text[0] == '#' and text[-1] == '#':
+                if text[1:-1] not in topic_list:
+                    topic_list.append(text[1:-1])
+        if topic_list:
+            topics = ','.join(topic_list)
+        return topics
+
     def parse_weibo(self, response):
         """解析网页中的微博信息"""
         for sel in response.xpath("//div[@class='card-wrap']"):
@@ -217,6 +231,8 @@ class SearchSpider(scrapy.Spider):
                     'string(.)').extract_first().replace('\u200b', '').replace(
                         '\ue627', '')
                 weibo['at_users'] = self.get_at_users(
+                    sel.xpath('.//p[@class="txt"]')[0])
+                weibo['topics'] = self.get_topics(
                     sel.xpath('.//p[@class="txt"]')[0])
                 reposts_count = sel.xpath(
                     './/a[@action-type="feed_list_forward"]/text()'
