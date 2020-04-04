@@ -262,6 +262,9 @@ class SearchSpider(scrapy.Spider):
                     'string(.)').extract_first().replace('\u200b', '').replace(
                         '\ue627', '')
                 weibo['location'] = self.get_location(txt_sel)
+                if weibo['location']:
+                    weibo['txt'] = weibo['txt'].replace(
+                        '2' + weibo['location'], '')
                 weibo['at_users'] = self.get_at_users(txt_sel)
                 weibo['topics'] = self.get_topics(txt_sel)
                 reposts_count = sel.xpath(
@@ -331,6 +334,9 @@ class SearchSpider(scrapy.Spider):
                                                              '').replace(
                                                                  '\ue627', '')
                     retweet['location'] = self.get_location(retweet_txt_sel)
+                    if retweet['location']:
+                        retweet['txt'] = retweet['txt'].replace(
+                            '2' + retweet['location'], '')
                     retweet['at_users'] = self.get_at_users(retweet_txt_sel)
                     retweet['topics'] = self.get_topics(retweet_txt_sel)
                     reposts_count = retweet_sel[0].xpath(
