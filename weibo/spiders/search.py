@@ -184,7 +184,8 @@ class SearchSpider(scrapy.Spider):
         a_list = selector.xpath('.//a')
         location = ''
         for a in a_list:
-            if a.xpath('./i[@class="wbicon"]'):
+            if a.xpath('./i[@class="wbicon"]') and a.xpath(
+                    './i[@class="wbicon"]/text()').extract_first() == '2':
                 location = a.xpath('string(.)').extract_first()[1:]
                 break
         return location
