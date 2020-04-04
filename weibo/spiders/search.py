@@ -246,18 +246,25 @@ class SearchSpider(scrapy.Spider):
                         './/p[@class="txt"]')[0]
                 content_full = sel.xpath(
                     './/p[@node-type="feed_list_content_full"]')
+                is_long_weibo = False
+                is_long_retweet = False
                 if content_full:
                     if not retweet_sel:
                         txt_sel = content_full[0]
+                        is_long_weibo = True
                     elif len(content_full) == 2:
                         txt_sel = content_full[0]
                         retweet_txt_sel = content_full[1]
+                        is_long_weibo = True
+                        is_long_retweet = True
                     elif retweet_sel[0].xpath(
                             './/p[@node-type="feed_list_content_full"]'):
                         retweet_txt_sel = retweet_sel[0].xpath(
                             './/p[@node-type="feed_list_content_full"]')[0]
+                        is_long_retweet = True
                     else:
                         txt_sel = content_full[0]
+                        is_long_weibo = True
                 weibo['txt'] = txt_sel.xpath(
                     'string(.)').extract_first().replace('\u200b', '').replace(
                         '\ue627', '')
@@ -265,6 +272,9 @@ class SearchSpider(scrapy.Spider):
                 if weibo['location']:
                     weibo['txt'] = weibo['txt'].replace(
                         '2' + weibo['location'], '')
+                weibo['txt'] = weibo['txt'][2:].replace(' ', '')
+                if is_long_weibo:
+                    weibo['txt'] = weibo['txt'][:-6]
                 weibo['at_users'] = self.get_at_users(txt_sel)
                 weibo['topics'] = self.get_topics(txt_sel)
                 reposts_count = sel.xpath(
@@ -337,6 +347,9 @@ class SearchSpider(scrapy.Spider):
                     if retweet['location']:
                         retweet['txt'] = retweet['txt'].replace(
                             '2' + retweet['location'], '')
+                    retweet['txt'] = retweet['txt'][2:].replace(' ', '')
+                    if is_long_retweet:
+                        retweet['txt'] = retweet['txt'][:-6]
                     retweet['at_users'] = self.get_at_users(retweet_txt_sel)
                     retweet['topics'] = self.get_topics(retweet_txt_sel)
                     reposts_count = retweet_sel[0].xpath(
