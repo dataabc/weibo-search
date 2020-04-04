@@ -237,15 +237,32 @@ class SearchSpider(scrapy.Spider):
                         '/')[-1]
                 weibo['nick_name'] = info[0].xpath(
                     'div[2]/a/@nick-name').extract_first()
-                weibo['txt'] = sel.xpath('.//p[@class="txt"]')[0].xpath(
+                txt_sel = sel.xpath('.//p[@class="txt"]')[0]
+                retweet_sel = sel.xpath('.//div[@class="card-comment"]')
+                retweet_txt_sel = ''
+                if retweet_sel:
+                    retweet_txt_sel = retweet_sel[0].xpath(
+                        './/p[@class="txt"]')[0]
+                content_full = sel.xpath(
+                    './/p[@node-type="feed_list_content_full"]')
+                if content_full:
+                    if not retweet_sel:
+                        txt_sel = content_full[0]
+                    elif len(content_full) == 2:
+                        txt_sel = content_full[0]
+                        retweet_txt_sel = content_full[1]
+                    elif retweet_sel[0].xpath(
+                            './/p[@node-type="feed_list_content_full"]'):
+                        retweet_txt_sel = retweet_sel[0].xpath(
+                            './/p[@node-type="feed_list_content_full"]')[0]
+                    else:
+                        txt_sel = content_full[0]
+                weibo['txt'] = txt_sel.xpath(
                     'string(.)').extract_first().replace('\u200b', '').replace(
                         '\ue627', '')
-                weibo['location'] = self.get_location(
-                    sel.xpath('.//p[@class="txt"]')[0])
-                weibo['at_users'] = self.get_at_users(
-                    sel.xpath('.//p[@class="txt"]')[0])
-                weibo['topics'] = self.get_topics(
-                    sel.xpath('.//p[@class="txt"]')[0])
+                weibo['location'] = self.get_location(txt_sel)
+                weibo['at_users'] = self.get_at_users(txt_sel)
+                weibo['topics'] = self.get_topics(txt_sel)
                 reposts_count = sel.xpath(
                     './/a[@action-type="feed_list_forward"]/text()'
                 ).extract_first()
@@ -286,7 +303,6 @@ class SearchSpider(scrapy.Spider):
                         'a[1]/@action-data').extract_first()
                     video_url = unquote(
                         str(video_url)).split('video_src=//')[-1]
-                retweet_sel = sel.xpath('.//div[@class="card-comment"]')
                 if not retweet_sel:
                     weibo['pics'] = pics
                     weibo['video_url'] = video_url
@@ -309,16 +325,13 @@ class SearchSpider(scrapy.Spider):
                         '@href').extract_first().split('/')[-1]
                     retweet['nick_name'] = info.xpath(
                         '@nick-name').extract_first()
-                    retweet['txt'] = retweet_sel[0].xpath(
-                        './/p[@class="txt"]')[0].xpath(
-                            'string(.)').extract_first().replace(
-                                '\u200b', '').replace('\ue627', '')
-                    retweet['location'] = self.get_location(
-                        retweet_sel[0].xpath('.//p[@class="txt"]')[0])
-                    retweet['at_users'] = self.get_at_users(
-                        retweet_sel[0].xpath('.//p[@class="txt"]')[0])
-                    retweet['topics'] = self.get_topics(
-                        retweet_sel[0].xpath('.//p[@class="txt"]')[0])
+                    retweet['txt'] = retweet_txt_sel.xpath(
+                        'string(.)').extract_first().replace('\u200b',
+                                                             '').replace(
+                                                                 '\ue627', '')
+                    retweet['location'] = self.get_location(retweet_txt_sel)
+                    retweet['at_users'] = self.get_at_users(retweet_txt_sel)
+                    retweet['topics'] = self.get_topics(retweet_txt_sel)
                     reposts_count = retweet_sel[0].xpath(
                         './/ul[@class="act s-fr"]/li/a[1]/text()'
                     ).extract_first()
