@@ -311,10 +311,10 @@ class SearchSpider(scrapy.Spider):
                         re.sub(r'/.*?/', '/large/', pic, 1) for pic in pics
                     ]
                 video_url = ''
-                is_exist_video = sel.xpath('.//div[@class="thumbnail"]')
+                is_exist_video = sel.xpath(
+                    './/div[@class="thumbnail"]/a/@action-data')
                 if is_exist_video:
-                    video_url = is_exist_video[0].xpath(
-                        'a[1]/@action-data').extract_first()
+                    video_url = is_exist_video.extract_first()
                     video_url = unquote(
                         str(video_url)).split('video_src=//')[-1]
                 if not retweet_sel:
