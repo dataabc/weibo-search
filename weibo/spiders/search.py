@@ -241,7 +241,7 @@ class SearchSpider(scrapy.Spider):
                 txt_sel = sel.xpath('.//p[@class="txt"]')[0]
                 retweet_sel = sel.xpath('.//div[@class="card-comment"]')
                 retweet_txt_sel = ''
-                if retweet_sel:
+                if retweet_sel and retweet_sel[0].xpath('.//p[@class="txt"]'):
                     retweet_txt_sel = retweet_sel[0].xpath(
                         './/p[@class="txt"]')[0]
                 content_full = sel.xpath(
@@ -323,7 +323,8 @@ class SearchSpider(scrapy.Spider):
                 else:
                     weibo['pics'] = ''
                     weibo['video_url'] = ''
-                if retweet_sel:
+                if retweet_sel and retweet_sel[0].xpath(
+                        './/div[@node-type="feed_list_forwardContent"]/a[1]'):
                     retweet = WeiboItem()
                     retweet_id = retweet_sel[0].xpath(
                         './/a[@action-type="feed_list_like"]/@action-data'
