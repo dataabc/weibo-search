@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from urllib.parse import unquote
 
 import scrapy
+from scrapy.exceptions import CloseSpider
 from scrapy.utils.project import get_project_settings
 
 import weibo.utils.util as util
@@ -301,7 +302,11 @@ class SearchSpider(scrapy.Spider):
                 reposts_count = sel.xpath(
                     './/a[@action-type="feed_list_forward"]/text()'
                 ).extract_first()
-                reposts_count = re.findall(r'\d+.*', reposts_count)
+                try:
+                    reposts_count = re.findall(r'\d+.*', reposts_count)
+                except TypeError:
+                    print('cookie无效或已过期')
+                    raise CloseSpider()
                 weibo['reposts_count'] = reposts_count[
                     0] if reposts_count else '0'
                 comments_count = sel.xpath(
