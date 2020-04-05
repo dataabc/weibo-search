@@ -7,7 +7,7 @@ import scrapy
 
 import weibo.utils.util as util
 from weibo.items import WeiboItem
-from weibo.utils.location import province_list
+from weibo.utils.location import location_dict
 
 
 class SearchSpider(scrapy.Spider):
@@ -116,9 +116,9 @@ class SearchSpider(scrapy.Spider):
                 next_url = self.base_url + next_url
                 yield scrapy.Request(url=next_url, callback=self.parse_page)
         else:
-            for province in province_list:
+            for location in location_dict.values():
                 url = 'https://s.weibo.com/weibo?q={}&region=custom:{}:1000&typeall=1&suball=1&timescope=custom:{}:{}&page=1'.format(
-                    keyword, province['id'], start_time, end_time)
+                    keyword, location['code'], start_time, end_time)
                 # 获取一小时一个省的搜索结果
                 yield scrapy.Request(url=url,
                                      callback=self.parse_by_hour_province,
@@ -126,7 +126,7 @@ class SearchSpider(scrapy.Spider):
                                          'keyword': keyword,
                                          'start_time': start_time,
                                          'end_time': end_time,
-                                         'province': province
+                                         'province': location
                                      })
 
     def parse_by_hour_province(self, response):
@@ -150,9 +150,9 @@ class SearchSpider(scrapy.Spider):
                 next_url = self.base_url + next_url
                 yield scrapy.Request(url=next_url, callback=self.parse_page)
         else:
-            for city in province['city_list']:
+            for city in province['city'].values():
                 url = 'https://s.weibo.com/weibo?q={}&region=custom:{}:{}&typeall=1&suball=1&timescope=custom:{}:{}&page=1'.format(
-                    keyword, province['id'], city['id'], start_time, end_time)
+                    keyword, province['code'], city, start_time, end_time)
                 # 获取一小时一个城市的搜索结果
                 yield scrapy.Request(url=url,
                                      callback=self.parse_page,
