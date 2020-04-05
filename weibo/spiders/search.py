@@ -40,7 +40,9 @@ class SearchSpider(scrapy.Spider):
                 '//a[@class="next"]/@href').extract_first()
             if next_url:
                 next_url = self.base_url + next_url
-                yield scrapy.Request(url=next_url, callback=self.parse_page)
+                yield scrapy.Request(url=next_url,
+                                     callback=self.parse_page,
+                                     meta={'keyword': keyword})
         else:
             start_date = datetime.strptime(self.start_date, '%Y-%m-%d')
             end_date = datetime.strptime(self.end_date, '%Y-%m-%d')
@@ -75,7 +77,9 @@ class SearchSpider(scrapy.Spider):
                 '//a[@class="next"]/@href').extract_first()
             if next_url:
                 next_url = self.base_url + next_url
-                yield scrapy.Request(url=next_url, callback=self.parse_page)
+                yield scrapy.Request(url=next_url,
+                                     callback=self.parse_page,
+                                     meta={'keyword': keyword})
         else:
             start_date_str = date + '-0'
             start_date = datetime.strptime(start_date_str, '%Y-%m-%d-%H')
@@ -114,7 +118,9 @@ class SearchSpider(scrapy.Spider):
                 '//a[@class="next"]/@href').extract_first()
             if next_url:
                 next_url = self.base_url + next_url
-                yield scrapy.Request(url=next_url, callback=self.parse_page)
+                yield scrapy.Request(url=next_url,
+                                     callback=self.parse_page,
+                                     meta={'keyword': keyword})
         else:
             for location in location_dict.values():
                 url = 'https://s.weibo.com/weibo?q={}&region=custom:{}:1000&typeall=1&suball=1&timescope=custom:{}:{}&page=1'.format(
@@ -148,7 +154,9 @@ class SearchSpider(scrapy.Spider):
                 '//a[@class="next"]/@href').extract_first()
             if next_url:
                 next_url = self.base_url + next_url
-                yield scrapy.Request(url=next_url, callback=self.parse_page)
+                yield scrapy.Request(url=next_url,
+                                     callback=self.parse_page,
+                                     meta={'keyword': keyword})
         else:
             for city in province['city'].values():
                 url = 'https://s.weibo.com/weibo?q={}&region=custom:{}:{}&typeall=1&suball=1&timescope=custom:{}:{}&page=1'.format(
@@ -166,6 +174,7 @@ class SearchSpider(scrapy.Spider):
 
     def parse_page(self, response):
         """解析一页搜索结果的信息"""
+        keyword = response.meta.get('keyword')
         is_empty = response.xpath(
             '//div[@class="card card-no-result s-pt20b40"]')
         if is_empty:
@@ -177,7 +186,9 @@ class SearchSpider(scrapy.Spider):
                 '//a[@class="next"]/@href').extract_first()
             if next_url:
                 next_url = self.base_url + next_url
-                yield scrapy.Request(url=next_url, callback=self.parse_page)
+                yield scrapy.Request(url=next_url,
+                                     callback=self.parse_page,
+                                     meta={'keyword': keyword})
 
     def get_location(self, selector):
         """获取微博发布位置"""
@@ -223,6 +234,7 @@ class SearchSpider(scrapy.Spider):
 
     def parse_weibo(self, response):
         """解析网页中的微博信息"""
+        keyword = response.meta.get('keyword')
         for sel in response.xpath("//div[@class='card-wrap']"):
             info = sel.xpath(
                 "div[@class='card']/div[@class='card-feed']/div[@class='content']/div[@class='info']"
@@ -379,7 +391,7 @@ class SearchSpider(scrapy.Spider):
                     retweet['source'] = source if source else ''
                     retweet['pics'] = pics
                     retweet['video_url'] = video_url
-                    yield retweet
+                    yield {'weibo': retweet, 'keyword': keyword}
                     weibo['retweet_id'] = retweet_id
                 print(weibo)
-                yield weibo
+                yield {'weibo': weibo, 'keyword': keyword}
