@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from urllib.parse import unquote
 
 import scrapy
+from scrapy.utils.project import get_project_settings
 
 import weibo.utils.util as util
 from weibo.items import WeiboItem
@@ -13,10 +14,12 @@ from weibo.utils.location import location_dict
 class SearchSpider(scrapy.Spider):
     name = 'search'
     allowed_domains = ['weibo.com']
-    keyword_list = ['迪丽热巴']
+    settings = get_project_settings()
+    keyword_list = settings.get('KEYWORD_LIST')
     base_url = 'https://s.weibo.com'
-    start_date = '2020-03-01'
-    end_date = '2020-03-01'
+    start_date = settings.get('START_DATE',
+                              datetime.now().strftime('%Y-%m-%d'))
+    end_date = settings.get('END_DATE', datetime.now().strftime('%Y-%m-%d'))
 
     def start_requests(self):
         start_date = datetime.strptime(self.start_date, '%Y-%m-%d')
