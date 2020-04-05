@@ -335,13 +335,13 @@ class SearchSpider(scrapy.Spider):
                 else:
                     weibo['pics'] = ''
                     weibo['video_url'] = ''
+                weibo['retweet_id'] = ''
                 if retweet_sel and retweet_sel[0].xpath(
                         './/div[@node-type="feed_list_forwardContent"]/a[1]'):
                     retweet = WeiboItem()
-                    retweet_id = retweet_sel[0].xpath(
+                    retweet['id'] = retweet_sel[0].xpath(
                         './/a[@action-type="feed_list_like"]/@action-data'
                     ).extract_first()[4:]
-                    retweet['id'] = retweet_id
                     retweet['bid'] = retweet_sel[0].xpath(
                         './/p[@class="from"]/a/@href').extract_first().split(
                             '/')[-1].split('?')[0]
@@ -391,7 +391,8 @@ class SearchSpider(scrapy.Spider):
                     retweet['source'] = source if source else ''
                     retweet['pics'] = pics
                     retweet['video_url'] = video_url
+                    retweet['retweet_id'] = ''
                     yield {'weibo': retweet, 'keyword': keyword}
-                    weibo['retweet_id'] = retweet_id
+                    weibo['retweet_id'] = retweet['id']
                 print(weibo)
                 yield {'weibo': weibo, 'keyword': keyword}

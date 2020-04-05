@@ -25,7 +25,7 @@ class CsvPipeline(object):
                     header = [
                         'id', 'bid', 'user_id', '用户昵称', '微博正文', '发布位置', '艾特用户',
                         '话题', '转发数', '评论数', '点赞数', '发布时间', '发布工具', '微博图片url',
-                        '微博视频url'
+                        '微博视频url', 'retweet_id'
                     ]
                     writer.writerow(header)
                 writer.writerow(
