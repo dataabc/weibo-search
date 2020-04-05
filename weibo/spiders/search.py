@@ -19,8 +19,14 @@ class SearchSpider(scrapy.Spider):
     end_date = '2020-03-01'
 
     def start_requests(self):
+        start_date = datetime.strptime(self.start_date, '%Y-%m-%d')
+        end_date = datetime.strptime(self.end_date,
+                                     '%Y-%m-%d') + timedelta(days=1)
+        start_str = start_date.strftime('%Y-%m-%d') + '-0'
+        end_str = end_date.strftime('%Y-%m-%d') + '-0'
         for keyword in self.keyword_list:
-            url = 'https://s.weibo.com/weibo?q={}'.format(keyword)
+            url = 'https://s.weibo.com/weibo?q={}&typeall=1&suball=1&timescope=custom:{}:{}'.format(
+                keyword, start_str, end_str)
             yield scrapy.Request(url=url,
                                  callback=self.parse,
                                  meta={'keyword': keyword})
