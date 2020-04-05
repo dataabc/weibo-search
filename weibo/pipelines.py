@@ -13,7 +13,10 @@ from scrapy.exceptions import DropItem
 
 class CsvPipeline(object):
     def process_item(self, item, spider):
-        file_path = item['keyword'] + '.csv'
+        base_dir = 'result' + os.sep + item['keyword']
+        if not os.path.isdir(base_dir):
+            os.makedirs(base_dir)
+        file_path = base_dir + os.sep + item['keyword'] + '.csv'
         if not os.path.isfile(file_path):
             is_first_write = 1
         else:
