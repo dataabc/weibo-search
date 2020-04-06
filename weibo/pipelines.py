@@ -8,7 +8,9 @@
 import csv
 import os
 
+import scrapy
 from scrapy.exceptions import DropItem
+from scrapy.pipelines.images import ImagesPipeline
 
 
 class CsvPipeline(object):
@@ -34,6 +36,37 @@ class CsvPipeline(object):
                 writer.writerow(
                     [item['weibo'][key] for key in item['weibo'].keys()])
         return item
+
+
+class MyImagesPipeline(ImagesPipeline):
+    def get_media_requests(self, item, info):
+        if len(item['weibo']['pics']) == 1:
+            yield scrapy.Request(item['weibo']['pics'][0],
+                                 meta={
+                                     'item': item,
+                                     'sign': ''
+                                 })
+        else:
+            sign = 0
+            for image_url in item['weibo']['pics']:
+                yield scrapy.Request(image_url,
+                                     meta={
+                                         'item': item,
+                                         'sign': '-' + str(sign)
+                                     })
+                sign += 1
+
+    def file_path(self, request, response=None, info=None):
+        image_url = request.url
+        item = request.meta['item']
+        sign = request.meta['sign']
+        base_dir = item['keyword']
+        if not os.path.isdir(base_dir):
+            os.makedirs(base_dir)
+        image_suffix = image_url[image_url.rfind('.'):]
+        file_path = base_dir + os.sep + item['weibo'][
+            'id'] + sign + image_suffix
+        return file_path
 
 
 class DuplicatesPipeline(object):

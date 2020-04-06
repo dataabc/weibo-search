@@ -15,7 +15,8 @@ DEFAULT_REQUEST_HEADERS = {
 }
 ITEM_PIPELINES = {
     'weibo.pipelines.DuplicatesPipeline': 300,
-    'weibo.pipelines.CsvPipeline': 301
+    'weibo.pipelines.CsvPipeline': 301,
+    'weibo.pipelines.MyImagesPipeline': 302
 }
 # 要搜索的关键词列表，可写多个
 KEYWORD_LIST = ['迪丽热巴']
@@ -23,3 +24,5 @@ KEYWORD_LIST = ['迪丽热巴']
 START_DATE = '2020-03-01'
 # 搜索的终止日期，为yyyy-mm-dd形式，搜索结果包含该日期
 END_DATE = '2020-03-01'
+# 图片文件存储路径
+IMAGES_STORE = './images'

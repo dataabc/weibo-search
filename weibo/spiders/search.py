@@ -336,6 +336,7 @@ class SearchSpider(scrapy.Spider):
                     pics = [
                         re.sub(r'/.*?/', '/large/', pic, 1) for pic in pics
                     ]
+                    pics = ['http://' + pic for pic in pics]
                 video_url = ''
                 is_exist_video = sel.xpath(
                     './/div[@class="thumbnail"]/a/@action-data')
