@@ -10,6 +10,7 @@ import os
 
 import scrapy
 from scrapy.exceptions import DropItem
+from scrapy.pipelines.files import FilesPipeline
 from scrapy.pipelines.images import ImagesPipeline
 
 
@@ -66,6 +67,21 @@ class MyImagesPipeline(ImagesPipeline):
         image_suffix = image_url[image_url.rfind('.'):]
         file_path = base_dir + os.sep + item['weibo'][
             'id'] + sign + image_suffix
+        return file_path
+
+
+class MyVideoPipeline(FilesPipeline):
+    def get_media_requests(self, item, info):
+        if item['weibo']['video_url']:
+            yield scrapy.Request(item['weibo']['video_url'],
+                                 meta={'item': item})
+
+    def file_path(self, request, response=None, info=None):
+        item = request.meta['item']
+        base_dir = item['keyword']
+        if not os.path.isdir(base_dir):
+            os.makedirs(base_dir)
+        file_path = base_dir + os.sep + item['weibo']['id'] + '.mp4'
         return file_path
 
 

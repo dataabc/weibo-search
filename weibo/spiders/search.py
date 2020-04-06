@@ -344,6 +344,7 @@ class SearchSpider(scrapy.Spider):
                     video_url = is_exist_video.extract_first()
                     video_url = unquote(
                         str(video_url)).split('video_src=//')[-1]
+                    video_url = 'http://' + video_url
                 if not retweet_sel:
                     weibo['pics'] = pics
                     weibo['video_url'] = video_url
