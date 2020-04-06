@@ -16,8 +16,9 @@ DEFAULT_REQUEST_HEADERS = {
 ITEM_PIPELINES = {
     'weibo.pipelines.DuplicatesPipeline': 300,
     'weibo.pipelines.CsvPipeline': 301,
-    'weibo.pipelines.MyImagesPipeline': 302,
-    'weibo.pipelines.MyVideoPipeline': 303
+    # 'weibo.pipelines.MongoPipeline': 302,
+    # 'weibo.pipelines.MyImagesPipeline': 303,
+    # 'weibo.pipelines.MyVideoPipeline': 304
 }
 # 要搜索的关键词列表，可写多个
 KEYWORD_LIST = ['迪丽热巴']
@@ -29,3 +30,5 @@ END_DATE = '2020-03-01'
 IMAGES_STORE = './下载文件/图片'
 # 视频文件存储路径
 FILES_STORE = './下载文件/视频'
+# 配置MongoDB数据库
+# MONGO_URI = 'localhost'

@@ -5,6 +5,7 @@
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 
+import copy
 import csv
 import os
 
@@ -12,6 +13,9 @@ import scrapy
 from scrapy.exceptions import DropItem
 from scrapy.pipelines.files import FilesPipeline
 from scrapy.pipelines.images import ImagesPipeline
+from scrapy.utils.project import get_project_settings
+
+settings = get_project_settings()
 
 
 class CsvPipeline(object):
@@ -83,6 +87,36 @@ class MyVideoPipeline(FilesPipeline):
             os.makedirs(base_dir)
         file_path = base_dir + os.sep + item['weibo']['id'] + '.mp4'
         return file_path
+
+
+class MongoPipeline(object):
+    def open_spider(self, spider):
+        try:
+            from pymongo import MongoClient
+            self.client = MongoClient(settings.get('MONGO_URI'))
+            self.db = self.client['weibo']
+            self.collection = self.db['weibo']
+        except ModuleNotFoundError:
+            spider.pymongo_error = True
+
+    def process_item(self, item, spider):
+        try:
+            import pymongo
+
+            new_item = copy.deepcopy(item)
+            if not self.collection.find_one({'id': new_item['weibo']['id']}):
+                self.collection.insert_one(dict(new_item['weibo']))
+            else:
+                self.collection.update_one({'id': new_item['weibo']['id']},
+                                           {'$set': dict(new_item['weibo'])})
+        except pymongo.errors.ServerSelectionTimeoutError:
+            spider.mongo_error = True
+
+    def close_spider(self, spider):
+        try:
+            self.client.close()
+        except AttributeError:
+            pass
 
 
 class DuplicatesPipeline(object):

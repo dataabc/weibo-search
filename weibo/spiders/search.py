@@ -21,6 +21,8 @@ class SearchSpider(scrapy.Spider):
     start_date = settings.get('START_DATE',
                               datetime.now().strftime('%Y-%m-%d'))
     end_date = settings.get('END_DATE', datetime.now().strftime('%Y-%m-%d'))
+    mongo_error = False
+    pymongo_error = False
 
     def start_requests(self):
         start_date = datetime.strptime(self.start_date, '%Y-%m-%d')
@@ -35,6 +37,14 @@ class SearchSpider(scrapy.Spider):
                                  callback=self.parse,
                                  meta={'keyword': keyword})
 
+    def check_environment(self):
+        if self.pymongo_error:
+            print('系统中可能没有安装pymongo库，请先运行 pip install pymongo ，再运行程序')
+            raise CloseSpider()
+        if self.mongo_error:
+            print('系统中可能没有安装或启动MongoDB数据库，请先根据系统环境安装或启动MongoDB，再运行程序')
+            raise CloseSpider()
+
     def parse(self, response):
         keyword = response.meta.get('keyword')
         is_empty = response.xpath(
@@ -45,6 +55,7 @@ class SearchSpider(scrapy.Spider):
         elif page_count < 50:
             # 解析当前页面
             for weibo in self.parse_weibo(response):
+                self.check_environment()
                 yield weibo
             next_url = response.xpath(
                 '//a[@class="next"]/@href').extract_first()
@@ -82,6 +93,7 @@ class SearchSpider(scrapy.Spider):
         elif page_count < 50:
             # 解析当前页面
             for weibo in self.parse_weibo(response):
+                self.check_environment()
                 yield weibo
             next_url = response.xpath(
                 '//a[@class="next"]/@href').extract_first()
@@ -123,6 +135,7 @@ class SearchSpider(scrapy.Spider):
         elif page_count < 50:
             # 解析当前页面
             for weibo in self.parse_weibo(response):
+                self.check_environment()
                 yield weibo
             next_url = response.xpath(
                 '//a[@class="next"]/@href').extract_first()
@@ -159,6 +172,7 @@ class SearchSpider(scrapy.Spider):
         elif page_count < 50:
             # 解析当前页面
             for weibo in self.parse_weibo(response):
+                self.check_environment()
                 yield weibo
             next_url = response.xpath(
                 '//a[@class="next"]/@href').extract_first()
@@ -191,6 +205,7 @@ class SearchSpider(scrapy.Spider):
             print('当前页面搜索结果为空')
         else:
             for weibo in self.parse_weibo(response):
+                self.check_environment()
                 yield weibo
             next_url = response.xpath(
                 '//a[@class="next"]/@href').extract_first()
