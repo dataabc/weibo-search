@@ -20,7 +20,7 @@ settings = get_project_settings()
 
 class CsvPipeline(object):
     def process_item(self, item, spider):
-        base_dir = 'result' + os.sep + item['keyword']
+        base_dir = '结果文件' + os.sep + item['keyword']
         if not os.path.isdir(base_dir):
             os.makedirs(base_dir)
         file_path = base_dir + os.sep + item['keyword'] + '.csv'
@@ -65,7 +65,7 @@ class MyImagesPipeline(ImagesPipeline):
         image_url = request.url
         item = request.meta['item']
         sign = request.meta['sign']
-        base_dir = item['keyword']
+        base_dir = item['keyword'] + os.sep + 'images'
         if not os.path.isdir(base_dir):
             os.makedirs(base_dir)
         image_suffix = image_url[image_url.rfind('.'):]
@@ -82,7 +82,7 @@ class MyVideoPipeline(FilesPipeline):
 
     def file_path(self, request, response=None, info=None):
         item = request.meta['item']
-        base_dir = item['keyword']
+        base_dir = item['keyword'] + os.sep + 'videos'
         if not os.path.isdir(base_dir):
             os.makedirs(base_dir)
         file_path = base_dir + os.sep + item['weibo']['id'] + '.mp4'
