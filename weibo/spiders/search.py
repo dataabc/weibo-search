@@ -23,6 +23,8 @@ class SearchSpider(scrapy.Spider):
     end_date = settings.get('END_DATE', datetime.now().strftime('%Y-%m-%d'))
     mongo_error = False
     pymongo_error = False
+    mysql_error = False
+    pymysql_error = False
 
     def start_requests(self):
         start_date = datetime.strptime(self.start_date, '%Y-%m-%d')
@@ -43,6 +45,12 @@ class SearchSpider(scrapy.Spider):
             raise CloseSpider()
         if self.mongo_error:
             print('系统中可能没有安装或启动MongoDB数据库，请先根据系统环境安装或启动MongoDB，再运行程序')
+            raise CloseSpider()
+        if self.pymysql_error:
+            print('系统中可能没有安装pymysql库，请先运行 pip install pymysql ，再运行程序')
+            raise CloseSpider()
+        if self.mysql_error:
+            print('系统中可能没有安装或正确配置MySQL数据库，请先根据系统环境安装或配置MySQL，再运行程序')
             raise CloseSpider()
 
     def parse(self, response):
@@ -273,7 +281,7 @@ class SearchSpider(scrapy.Spider):
                 weibo['user_id'] = info[0].xpath(
                     'div[2]/a/@href').extract_first().split('?')[0].split(
                         '/')[-1]
-                weibo['nick_name'] = info[0].xpath(
+                weibo['screen_name'] = info[0].xpath(
                     'div[2]/a/@nick-name').extract_first()
                 txt_sel = sel.xpath('.//p[@class="txt"]')[0]
                 retweet_sel = sel.xpath('.//div[@class="card-comment"]')
@@ -302,16 +310,16 @@ class SearchSpider(scrapy.Spider):
                     else:
                         txt_sel = content_full[0]
                         is_long_weibo = True
-                weibo['txt'] = txt_sel.xpath(
+                weibo['text'] = txt_sel.xpath(
                     'string(.)').extract_first().replace('\u200b', '').replace(
                         '\ue627', '')
                 weibo['location'] = self.get_location(txt_sel)
                 if weibo['location']:
-                    weibo['txt'] = weibo['txt'].replace(
+                    weibo['text'] = weibo['text'].replace(
                         '2' + weibo['location'], '')
-                weibo['txt'] = weibo['txt'][2:].replace(' ', '')
+                weibo['text'] = weibo['text'][2:].replace(' ', '')
                 if is_long_weibo:
-                    weibo['txt'] = weibo['txt'][:-6]
+                    weibo['text'] = weibo['text'][:-6]
                 weibo['at_users'] = self.get_at_users(txt_sel)
                 weibo['topics'] = self.get_topics(txt_sel)
                 reposts_count = sel.xpath(
@@ -381,19 +389,19 @@ class SearchSpider(scrapy.Spider):
                     )[0]
                     retweet['user_id'] = info.xpath(
                         '@href').extract_first().split('/')[-1]
-                    retweet['nick_name'] = info.xpath(
+                    retweet['screen_name'] = info.xpath(
                         '@nick-name').extract_first()
-                    retweet['txt'] = retweet_txt_sel.xpath(
+                    retweet['text'] = retweet_txt_sel.xpath(
                         'string(.)').extract_first().replace('\u200b',
                                                              '').replace(
                                                                  '\ue627', '')
                     retweet['location'] = self.get_location(retweet_txt_sel)
                     if retweet['location']:
-                        retweet['txt'] = retweet['txt'].replace(
+                        retweet['text'] = retweet['text'].replace(
                             '2' + retweet['location'], '')
-                    retweet['txt'] = retweet['txt'][2:].replace(' ', '')
+                    retweet['text'] = retweet['text'][2:].replace(' ', '')
                     if is_long_retweet:
-                        retweet['txt'] = retweet['txt'][:-6]
+                        retweet['text'] = retweet['text'][:-6]
                     retweet['at_users'] = self.get_at_users(retweet_txt_sel)
                     retweet['topics'] = self.get_topics(retweet_txt_sel)
                     reposts_count = retweet_sel[0].xpath(

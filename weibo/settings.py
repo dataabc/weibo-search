@@ -16,9 +16,10 @@ DEFAULT_REQUEST_HEADERS = {
 ITEM_PIPELINES = {
     'weibo.pipelines.DuplicatesPipeline': 300,
     'weibo.pipelines.CsvPipeline': 301,
-    # 'weibo.pipelines.MongoPipeline': 302,
-    # 'weibo.pipelines.MyImagesPipeline': 303,
-    # 'weibo.pipelines.MyVideoPipeline': 304
+    # 'weibo.pipelines.MysqlPipeline': 302,
+    # 'weibo.pipelines.MongoPipeline': 303,
+    # 'weibo.pipelines.MyImagesPipeline': 304,
+    # 'weibo.pipelines.MyVideoPipeline': 305
 }
 # 要搜索的关键词列表，可写多个
 KEYWORD_LIST = ['迪丽热巴']
@@ -32,3 +33,9 @@ IMAGES_STORE = './下载文件/图片'
 FILES_STORE = './下载文件/视频'
 # 配置MongoDB数据库
 # MONGO_URI = 'localhost'
+# 配置MySQL数据库，以下为默认配置，可以根据实际情况更改，程序会自动生成一个名为weibo的数据库，如果想换其它名字请更改MYSQL_DATABASE值
+# MYSQL_HOST = 'localhost'
+# MYSQL_PORT = 3306
+# MYSQL_USER = 'root'
+# MYSQL_PASSWORD = '123456'
+# MYSQL_DATABASE = 'weibo'
