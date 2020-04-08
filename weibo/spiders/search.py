@@ -17,6 +17,7 @@ class SearchSpider(scrapy.Spider):
     allowed_domains = ['weibo.com']
     settings = get_project_settings()
     keyword_list = settings.get('KEYWORD_LIST')
+    weibo_type = util.convert_weibo_type(settings.get('WEIBO_TYPE', 1))
     base_url = 'https://s.weibo.com'
     start_date = settings.get('START_DATE',
                               datetime.now().strftime('%Y-%m-%d'))
@@ -33,8 +34,10 @@ class SearchSpider(scrapy.Spider):
         start_str = start_date.strftime('%Y-%m-%d') + '-0'
         end_str = end_date.strftime('%Y-%m-%d') + '-0'
         for keyword in self.keyword_list:
-            url = 'https://s.weibo.com/weibo?q={}&typeall=1&suball=1&timescope=custom:{}:{}'.format(
-                keyword, start_str, end_str)
+            url = 'https://s.weibo.com/weibo?q=%s' % keyword
+            url += self.weibo_type
+            url += '&suball=1&timescope=custom:{}:{}'.format(
+                start_str, end_str)
             yield scrapy.Request(url=url,
                                  callback=self.parse,
                                  meta={'keyword': keyword})
@@ -79,8 +82,10 @@ class SearchSpider(scrapy.Spider):
                 start_str = start_date.strftime('%Y-%m-%d') + '-0'
                 start_date = start_date + timedelta(days=1)
                 end_str = start_date.strftime('%Y-%m-%d') + '-0'
-                url = 'https://s.weibo.com/weibo?q={}&typeall=1&suball=1&timescope=custom:{}:{}&page=1'.format(
-                    keyword, start_str, end_str)
+                url = 'https://s.weibo.com/weibo?q=%s' % keyword
+                url += self.weibo_type
+                url += '&suball=1&timescope=custom:{}:{}'.format(
+                    start_str, end_str)
                 # 获取一天的搜索结果
                 yield scrapy.Request(url=url,
                                      callback=self.parse_by_day,
@@ -119,8 +124,10 @@ class SearchSpider(scrapy.Spider):
                 start_date = start_date + timedelta(hours=1)
                 end_str = start_date.strftime('%Y-%m-%d-X%H').replace(
                     'X0', 'X').replace('X', '')
-                url = 'https://s.weibo.com/weibo?q={}&typeall=1&suball=1&timescope=custom:{}:{}&page=1'.format(
-                    keyword, start_str, end_str)
+                url = 'https://s.weibo.com/weibo?q=%s' % keyword
+                url += self.weibo_type
+                url += '&suball=1&timescope=custom:{}:{}'.format(
+                    start_str, end_str)
                 # 获取一小时的搜索结果
                 yield scrapy.Request(url=url,
                                      callback=self.parse_by_hour,
@@ -154,8 +161,11 @@ class SearchSpider(scrapy.Spider):
                                      meta={'keyword': keyword})
         else:
             for location in location_dict.values():
-                url = 'https://s.weibo.com/weibo?q={}&region=custom:{}:1000&typeall=1&suball=1&timescope=custom:{}:{}&page=1'.format(
-                    keyword, location['code'], start_time, end_time)
+                url = ('https://s.weibo.com/weibo?q={}&region=custom:{}:1000'
+                       ).format(keyword, location['code'])
+                url += self.weibo_type
+                url += '&suball=1&timescope=custom:{}:{}'.format(
+                    start_time, end_time)
                 # 获取一小时一个省的搜索结果
                 yield scrapy.Request(url=url,
                                      callback=self.parse_by_hour_province,
@@ -191,8 +201,11 @@ class SearchSpider(scrapy.Spider):
                                      meta={'keyword': keyword})
         else:
             for city in province['city'].values():
-                url = 'https://s.weibo.com/weibo?q={}&region=custom:{}:{}&typeall=1&suball=1&timescope=custom:{}:{}&page=1'.format(
-                    keyword, province['code'], city, start_time, end_time)
+                url = ('https://s.weibo.com/weibo?q={}&region=custom:{}:{}'
+                       ).format(keyword, province['code'], city)
+                url += self.weibo_type
+                url += '&suball=1&timescope=custom:{}:{}'.format(
+                    start_time, end_time)
                 # 获取一小时一个城市的搜索结果
                 yield scrapy.Request(url=url,
                                      callback=self.parse_page,

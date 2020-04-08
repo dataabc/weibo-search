@@ -2,6 +2,26 @@
 from datetime import datetime, timedelta
 
 
+def convert_weibo_type(weibo_type):
+    """将微博类型转换成字符串"""
+    if weibo_type == 0:
+        return '&typeall=1'
+    elif weibo_type == 1:
+        return '&scope=ori'
+    elif weibo_type == 2:
+        return '&xsort=hot'
+    elif weibo_type == 3:
+        return '&atten=1'
+    elif weibo_type == 4:
+        return '&vip=1'
+    elif weibo_type == 5:
+        return '&category=4'
+    elif weibo_type == 6:
+        return '&viewpoint=1'
+    else:
+        return '&scope=ori'
+
+
 def standardize_date(created_at):
     """标准化微博发布时间"""
     if "刚刚" in created_at:
