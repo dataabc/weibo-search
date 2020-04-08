@@ -32,7 +32,10 @@
 $ git clone https://github.com/dataabc/weibo-search.git
 ```
 ### 2.安装Scrapy
-本程序依赖Scrapy，要想运行程序，需要安装Scrapy。如果系统中没有安装Scrapy，请根据自己的系统安装Scrapy。
+本程序依赖Scrapy，要想运行程序，需要安装Scrapy。如果系统中没有安装Scrapy，请根据自己的系统安装Scrapy，以Ubuntu为例，可以使用如下命令：
+```bash
+$ pip install scrapy
+```
 ### 3.配置程序
 本程序的所有配置都在setting.py文件中完成，该文件位于“weibo-search\weibo\settings.py”，文件内容大致如下：
 ```
