@@ -18,8 +18,22 @@ def convert_weibo_type(weibo_type):
         return '&category=4'
     elif weibo_type == 6:
         return '&viewpoint=1'
-    else:
-        return '&scope=ori'
+    return '&scope=ori'
+
+
+def convert_contain_type(contain_type):
+    """将包含类型转换成字符串"""
+    if contain_type == 0:
+        return '&suball=1'
+    elif contain_type == 1:
+        return '&haspic=1'
+    elif contain_type == 2:
+        return '&hasvideo=1'
+    elif contain_type == 3:
+        return '&hasmusic=1'
+    elif contain_type == 4:
+        return '&haslink=1'
+    return '&suball=1'
 
 
 def standardize_date(created_at):
