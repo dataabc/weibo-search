@@ -32,9 +32,9 @@ START_DATE = '2020-03-01'
 # 搜索的终止日期，为yyyy-mm-dd形式，搜索结果包含该日期
 END_DATE = '2020-03-01'
 # 图片文件存储路径
-IMAGES_STORE = './结果文件'
+IMAGES_STORE = './'
 # 视频文件存储路径
-FILES_STORE = './结果文件'
+FILES_STORE = './'
 # 配置MongoDB数据库
 # MONGO_URI = 'localhost'
 # 配置MySQL数据库，以下为默认配置，可以根据实际情况更改，程序会自动生成一个名为weibo的数据库，如果想换其它名字请更改MYSQL_DATABASE值
