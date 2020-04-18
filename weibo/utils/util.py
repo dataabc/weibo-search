@@ -1,6 +1,8 @@
 
 from datetime import datetime, timedelta
 
+from weibo.utils.region import region_dict
+
 
 def convert_weibo_type(weibo_type):
     """将微博类型转换成字符串"""
@@ -34,6 +36,17 @@ def convert_contain_type(contain_type):
     elif contain_type == 4:
         return '&haslink=1'
     return '&suball=1'
+
+
+def get_regions(region):
+    new_region = {}
+    if region:
+        for key in region:
+            if region_dict.get(key):
+                new_region[key] = region_dict[key]
+    if not new_region:
+        new_region = region_dict
+    return new_region
 
 
 def standardize_date(created_at):

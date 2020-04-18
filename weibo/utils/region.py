@@ -1,4 +1,4 @@
-location_dict = {
+region_dict = {
     "安徽": {
         "code": 34,
         "city": {
