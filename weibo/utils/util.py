@@ -39,6 +39,7 @@ def convert_contain_type(contain_type):
 
 
 def get_regions(region):
+    """根据区域筛选条件返回符合要求的region"""
     new_region = {}
     if region:
         for key in region:

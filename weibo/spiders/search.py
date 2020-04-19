@@ -65,6 +65,7 @@ class SearchSpider(scrapy.Spider):
                                          })
 
     def check_environment(self):
+        """判断配置要求的软件是否已安装"""
         if self.pymongo_error:
             print('系统中可能没有安装pymongo库，请先运行 pip install pymongo ，再运行程序')
             raise CloseSpider()
@@ -157,26 +158,16 @@ class SearchSpider(scrapy.Spider):
                 url += '&timescope=custom:{}:{}&page=1'.format(
                     start_str, end_str)
                 # 获取一小时的搜索结果
-                if province:
-                    yield scrapy.Request(url=url,
-                                         callback=self.parse_by_hour_province,
-                                         meta={
-                                             'base_url': base_url,
-                                             'keyword': keyword,
-                                             'province': province,
-                                             'start_time': start_str,
-                                             'end_time': end_str
-                                         })
-                else:
-                    yield scrapy.Request(url=url,
-                                         callback=self.parse_by_hour,
-                                         meta={
-                                             'base_url': base_url,
-                                             'keyword': keyword,
-                                             'province': province,
-                                             'start_time': start_str,
-                                             'end_time': end_str
-                                         })
+                yield scrapy.Request(url=url,
+                                     callback=self.parse_by_hour_province
+                                     if province else self.parse_by_hour,
+                                     meta={
+                                         'base_url': base_url,
+                                         'keyword': keyword,
+                                         'province': province,
+                                         'start_time': start_str,
+                                         'end_time': end_str
+                                     })
 
     def parse_by_hour(self, response):
         """以小时为单位筛选"""
@@ -384,7 +375,9 @@ class SearchSpider(scrapy.Spider):
                 try:
                     reposts_count = re.findall(r'\d+.*', reposts_count)
                 except TypeError:
-                    print('cookie无效或已过期')
+                    print('cookie无效或已过期，请按照'
+                          'https://github.com/dataabc/weibo-search#如何获取cookie'
+                          ' 获取cookie')
                     raise CloseSpider()
                 weibo['reposts_count'] = reposts_count[
                     0] if reposts_count else '0'
