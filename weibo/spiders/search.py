@@ -108,7 +108,8 @@ class SearchSpider(scrapy.Spider):
                 end_str = start_date.strftime('%Y-%m-%d') + '-0'
                 url = base_url + self.weibo_type
                 url += self.contain_type
-                url += '&timescope=custom:{}:{}'.format(start_str, end_str)
+                url += '&timescope=custom:{}:{}&page=1'.format(
+                    start_str, end_str)
                 # 获取一天的搜索结果
                 yield scrapy.Request(url=url,
                                      callback=self.parse_by_day,
@@ -153,7 +154,8 @@ class SearchSpider(scrapy.Spider):
                     'X0', 'X').replace('X', '')
                 url = base_url + self.weibo_type
                 url += self.contain_type
-                url += '&timescope=custom:{}:{}'.format(start_str, end_str)
+                url += '&timescope=custom:{}:{}&page=1'.format(
+                    start_str, end_str)
                 # 获取一小时的搜索结果
                 if province:
                     yield scrapy.Request(url=url,
@@ -204,7 +206,8 @@ class SearchSpider(scrapy.Spider):
                        ).format(keyword, region['code'])
                 url += self.weibo_type
                 url += self.contain_type
-                url += '&timescope=custom:{}:{}'.format(start_time, end_time)
+                url += '&timescope=custom:{}:{}&page=1'.format(
+                    start_time, end_time)
                 # 获取一小时一个省的搜索结果
                 yield scrapy.Request(url=url,
                                      callback=self.parse_by_hour_province,
@@ -244,7 +247,8 @@ class SearchSpider(scrapy.Spider):
                        ).format(keyword, province['code'], city)
                 url += self.weibo_type
                 url += self.contain_type
-                url += '&timescope=custom:{}:{}'.format(start_time, end_time)
+                url += '&timescope=custom:{}:{}&page=1'.format(
+                    start_time, end_time)
                 # 获取一小时一个城市的搜索结果
                 yield scrapy.Request(url=url,
                                      callback=self.parse_page,
