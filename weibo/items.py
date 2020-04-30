@@ -15,6 +15,7 @@ class WeiboItem(scrapy.Item):
     user_id = scrapy.Field()
     screen_name = scrapy.Field()
     text = scrapy.Field()
+    article_url = scrapy.Field()
     location = scrapy.Field()
     at_users = scrapy.Field()
     topics = scrapy.Field()

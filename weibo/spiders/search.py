@@ -270,6 +270,23 @@ class SearchSpider(scrapy.Spider):
                                      callback=self.parse_page,
                                      meta={'keyword': keyword})
 
+    def get_article_url(self, selector):
+        """获取微博头条文章url"""
+        article_url = ''
+        text = selector.xpath('string(.)').extract_first().replace(
+            '\u200b', '').replace('\ue627', '').replace('\n',
+                                                        '').replace(' ', '')
+        if text.startswith('发布了头条文章'):
+            urls = selector.xpath('.//a')
+            for url in urls:
+                if url.xpath(
+                        'i[@class="wbicon"]/text()').extract_first() == 'O':
+                    if url.xpath('@href').extract_first() and url.xpath(
+                            '@href').extract_first().startswith('http://t.cn'):
+                        article_url = url.xpath('@href').extract_first()
+                    break
+        return article_url
+
     def get_location(self, selector):
         """获取微博发布位置"""
         a_list = selector.xpath('.//a')
@@ -360,6 +377,7 @@ class SearchSpider(scrapy.Spider):
                 weibo['text'] = txt_sel.xpath(
                     'string(.)').extract_first().replace('\u200b', '').replace(
                         '\ue627', '')
+                weibo['article_url'] = self.get_article_url(txt_sel)
                 weibo['location'] = self.get_location(txt_sel)
                 if weibo['location']:
                     weibo['text'] = weibo['text'].replace(
@@ -444,6 +462,8 @@ class SearchSpider(scrapy.Spider):
                         'string(.)').extract_first().replace('\u200b',
                                                              '').replace(
                                                                  '\ue627', '')
+                    retweet['article_url'] = self.get_article_url(
+                        retweet_txt_sel)
                     retweet['location'] = self.get_location(retweet_txt_sel)
                     if retweet['location']:
                         retweet['text'] = retweet['text'].replace(

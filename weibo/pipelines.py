@@ -33,9 +33,9 @@ class CsvPipeline(object):
                 writer = csv.writer(f)
                 if is_first_write:
                     header = [
-                        'id', 'bid', 'user_id', '用户昵称', '微博正文', '发布位置', '艾特用户',
-                        '话题', '转发数', '评论数', '点赞数', '发布时间', '发布工具', '微博图片url',
-                        '微博视频url', 'retweet_id'
+                        'id', 'bid', 'user_id', '用户昵称', '微博正文', '头条文章url',
+                        '发布位置', '艾特用户', '话题', '转发数', '评论数', '点赞数', '发布时间',
+                        '发布工具', '微博图片url', '微博视频url', 'retweet_id'
                     ]
                     writer.writerow(header)
                 writer.writerow(
@@ -140,6 +140,7 @@ class MysqlPipeline(object):
                 user_id varchar(20),
                 screen_name varchar(30),
                 text varchar(2000),
+                article_url varchar(100),
                 topics varchar(200),
                 at_users varchar(1000),
                 pics varchar(3000),
@@ -206,7 +207,7 @@ class DuplicatesPipeline(object):
 
     def process_item(self, item, spider):
         if item['weibo']['id'] in self.ids_seen:
-            raise DropItem("Duplicate item found: %s" % item)
+            raise DropItem("过滤重复微博: %s" % item)
         else:
             self.ids_seen.add(item['weibo']['id'])
             return item
