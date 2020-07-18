@@ -16,6 +16,9 @@ class SearchSpider(scrapy.Spider):
     allowed_domains = ['weibo.com']
     settings = get_project_settings()
     keyword_list = settings.get('KEYWORD_LIST')
+    for i, keyword in enumerate(keyword_list):
+        if len(keyword) > 2 and keyword[0] == '#' and keyword[-1] == '#':
+            keyword_list[i] = '%23' + keyword[1:-1] + '%23'
     weibo_type = util.convert_weibo_type(settings.get('WEIBO_TYPE'))
     contain_type = util.convert_contain_type(settings.get('CONTAIN_TYPE'))
     regions = util.get_regions(settings.get('REGION'))
