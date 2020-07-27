@@ -28,6 +28,7 @@
 - 微博视频：微博中的视频，保存在以关键词为名的文件夹下的videos文件夹里
 
 ## 使用说明
+本程序的所有配置都在setting.py文件中完成，该文件位于“weibo-search\weibo\settings.py”。
 ### 1.下载脚本
 ```bash
 $ git clone https://github.com/dataabc/weibo-search.git
@@ -41,56 +42,59 @@ $ pip install scrapy
 ```
 $ pip install -r requirements.txt
 ```
-### 4.配置程序
-本程序的所有配置都在setting.py文件中完成，该文件位于“weibo-search\weibo\settings.py”，文件内容大致如下：
+
+### 4.设置cookie
+DEFAULT_REQUEST_HEADERS中的cookie是我们需要填的值，如何获取cookie详见[如何获取cookie](#如何获取cookie)，获取后将"your cookie"替换成真实的cookie即可。
+### 5.设置搜索关键词
+修改setting.py文件夹中的KEYWORD_LIST参数。
+如果你想搜索一个关键词，如“迪丽热巴”：
 ```
-LOG_LEVEL = 'ERROR'
-DOWNLOAD_DELAY = 10
-DEFAULT_REQUEST_HEADERS = {
-    'Accept':
-    'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-    'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8,en-US;q=0.7',
-    'cookie': 'your cookie'
-}
-ITEM_PIPELINES = {
-    'weibo.pipelines.DuplicatesPipeline': 300,
-    'weibo.pipelines.CsvPipeline': 301,
-    'weibo.pipelines.MysqlPipeline': 302,
-    'weibo.pipelines.MongoPipeline': 303,
-    'weibo.pipelines.MyImagesPipeline': 304,
-    'weibo.pipelines.MyVideoPipeline': 305
-}
 KEYWORD_LIST = ['迪丽热巴']
-WEIBO_TYPE = 1
-CONTAIN_TYPE = 0
-REGION = ['全部']
-START_DATE = '2020-03-01'
-END_DATE = '2020-03-01'
-# 图片文件存储路径
-IMAGES_STORE = './'
-# 视频文件存储路径
-FILES_STORE = './'
-# 配置MongoDB数据库
-# MONGO_URI = 'localhost'
-# 配置MySQL数据库，以下为默认配置，可以根据实际情况更改，程序会自动生成一个名为weibo的数据库，如果想换其它名字请更改MYSQL_DATABASE值
-# MYSQL_HOST = 'localhost'
-# MYSQL_PORT = 3306
-# MYSQL_USER = 'root'
-# MYSQL_PASSWORD = '123456'
-# MYSQL_DATABASE = 'weibo'
 ```
-LOG_LEVEL代表日志的显示级别，“ERROR”意思是只有在程序出错时才显示日志；<br>
-DOWNLOAD_DELAY代表访问完一个页面再访问下一个时需要等待的时间，默认为10秒；<br>
-DEFAULT_REQUEST_HEADERS中的cookie是我们需要填的值，如何获取cookie详见[如何获取cookie](#如何获取cookie)，获取后将"your cookie"替换成真实的cookie即可；<br>
-ITEM_PIPELINES是我们可选的结果写入类型，第一个代表去重，第二个代表写入csv文件，第三个代表写入MySQL数据库，第四个代表写入MongDB数据库，第五个代表下载图片，第六个代表下载视频。后面的数字代表执行的顺序，数字越小优先级越高。如果你只要写入部分类型，可以把不需要的类型用“#”注释掉，以节省资源；<br>
-KEYWORD_LIST存储要搜索的关键词，可以写一个或多个；<br>
-WEIBO_TYPE筛选要搜索的微博类型，0代表搜索全部微博，1代表搜索全部原创微博，2代表热门微博，3代表关注人微博，4代表认证用户微博，5代表媒体微博，6代表观点微博；<br>
-CONTAIN_TYPE筛选结果微博中必需包含的内容，0代表不筛选，获取全部微博，1代表搜索包含图片的微博，2代表包含视频的微博，3代表包含音乐的微博，4代表包含短链接的微博；<br>
-REGION筛选微博的发布地区，精确到省或直辖市，值不应包含“省”或“市”等字，如想筛选北京市的微博请用“北京”而不是“北京市”，想要筛选安徽省的微博请用“安徽”而不是“安徽省”，可以写多个地区，具体支持的地名见region.py文件，注意只支持省或直辖市的名字，省下面的市名及直辖市下面的区县名不支持，不筛选请用”全部“；<br>
-START_DATE代表搜索的起始日期，END_DATE代表搜索的结束日期。程序会搜索包含关键词且发布时间在起始日期和结束日期之间的微博（包含边界），值为“yyyy-mm-dd”形式；<br>
+如果你想分别搜索多个关键词，如想要分别获得“迪丽热巴”和“杨幂”的搜索结果：
+```
+KEYWORD_LIST = ['迪丽热巴', '杨幂']
+```
+如果你想搜索同时包含多个关键词的微博，如同时包含“迪丽热巴”和“杨幂”微博的搜索结果：
+```
+KEYWORD_LIST = ['迪丽热巴 杨幂']
+```
+如果你想搜索微博话题，即包含#的内容，如“#迪丽热巴#”：
+```
+KEYWORD_LIST = ['#迪丽热巴#']
+```
+### 6.设置搜索时间范围
+START_DATE代表搜索的起始日期，END_DATE代表搜索的结束日期，值为“yyyy-mm-dd”形式，程序会搜索包含关键词且发布时间在起始日期和结束日期之间的微博（包含边界）。比如我想筛选发布时间在2020-06-01到2020-06-02这两天的微博：
+```
+START_DATE = '2020-06-01'
+END_DATE = '2020-06-02'
+```
+### 7.设置结果保存类型（可选）
+ITEM_PIPELINES是我们可选的结果保存类型，第一个代表去重，第二个代表写入csv文件，第三个代表写入MySQL数据库，第四个代表写入MongDB数据库，第五个代表下载图片，第六个代表下载视频。后面的数字代表执行的顺序，数字越小优先级越高。如果你只要写入部分类型，可以把不需要的类型用“#”注释掉，以节省资源；如果你想写入数据库，需要在setting.py填写相关数据库的配置。
+### 8.设置等待时间（可选）
+DOWNLOAD_DELAY代表访问完一个页面再访问下一个时需要等待的时间，默认为10秒。如我想设置等待15秒左右，可以修改setting.py文件的DOWNLOAD_DELAY参数：
+```
+DOWNLOAD_DELAY = 15
+```
+### 9.设置微博类型（可选）
+WEIBO_TYPE筛选要搜索的微博类型，0代表搜索全部微博，1代表搜索全部原创微博，2代表热门微博，3代表关注人微博，4代表认证用户微博，5代表媒体微博，6代表观点微博。比如我想要搜索全部原创微博，修改setting.py文件的WEIBO_TYPE参数：
+```
+WEIBO_TYPE = 1
+```
+### 10.设置包含内容（可选）
+CONTAIN_TYPE筛选结果微博中必需包含的内容，0代表不筛选，获取全部微博，1代表搜索包含图片的微博，2代表包含视频的微博，3代表包含音乐的微博，4代表包含短链接的微博。比如我想筛选包含图片的微博，修改setting.py文件的CONTAIN_TYPE参数：
+```
+CONTAIN_TYPE = 1
+```
+### 11.筛选微博发布地区（可选）
+REGION筛选微博的发布地区，精确到省或直辖市，值不应包含“省”或“市”等字，如想筛选北京市的微博请用“北京”而不是“北京市”，想要筛选安徽省的微博请用“安徽”而不是“安徽省”，可以写多个地区，具体支持的地名见region.py文件，注意只支持省或直辖市的名字，省下面的市名及直辖市下面的区县名不支持，不筛选请用”全部“。比如我想要筛选发布地在山东省的微博：
+```
+REGION = ['山东']
+```
+### 12.配置数据库（可选）
 MONGO_URI是MongoDB数据库的配置；<br>
 MYSQL开头的是MySQL数据库的配置。
-### 5.运行程序
+### 13.运行程序
 ```bash
 $ scrapy crawl search -s JOBDIR=crawls/search
 ```
