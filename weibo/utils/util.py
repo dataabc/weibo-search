@@ -1,4 +1,4 @@
-
+import sys
 from datetime import datetime, timedelta
 
 from weibo.utils.region import region_dict
@@ -38,6 +38,22 @@ def convert_contain_type(contain_type):
     return '&suball=1'
 
 
+def get_keyword_list(file_name):
+    """获取文件中的关键词列表"""
+    with open(file_name, 'rb') as f:
+        try:
+            lines = f.read().splitlines()
+            lines = [line.decode('utf-8-sig') for line in lines]
+        except UnicodeDecodeError:
+            print(u'%s文件应为utf-8编码，请先将文件编码转为utf-8再运行程序', file_name)
+            sys.exit()
+        keyword_list = []
+        for line in lines:
+            if line:
+                keyword_list.append(line)
+    return keyword_list
+
+
 def get_regions(region):
     """根据区域筛选条件返回符合要求的region"""
     new_region = {}
@@ -68,7 +84,7 @@ def standardize_date(created_at):
         created_at = (datetime.now() - hour).strftime("%Y-%m-%d %H:%M")
     elif "今天" in created_at:
         today = datetime.now().strftime('%Y-%m-%d')
-        created_at = today+' '+created_at[2:]
+        created_at = today + ' ' + created_at[2:]
     elif '年' not in created_at:
         year = datetime.now().strftime("%Y")
         month = created_at[:2]

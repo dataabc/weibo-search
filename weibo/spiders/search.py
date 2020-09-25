@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
+import os
 import re
+import sys
 from datetime import datetime, timedelta
 from urllib.parse import unquote
 
 import scrapy
+import weibo.utils.util as util
 from scrapy.exceptions import CloseSpider
 from scrapy.utils.project import get_project_settings
-
-import weibo.utils.util as util
 from weibo.items import WeiboItem
 
 
@@ -16,6 +17,14 @@ class SearchSpider(scrapy.Spider):
     allowed_domains = ['weibo.com']
     settings = get_project_settings()
     keyword_list = settings.get('KEYWORD_LIST')
+    if not isinstance(keyword_list, list):
+        if not os.path.isabs(keyword_list):
+            keyword_list = os.getcwd() + os.sep + keyword_list
+        if not os.path.isfile(keyword_list):
+            print('不存在%s文件' % keyword_list)
+            sys.exit()
+        keyword_list = util.get_keyword_list(keyword_list)
+
     for i, keyword in enumerate(keyword_list):
         if len(keyword) > 2 and keyword[0] == '#' and keyword[-1] == '#':
             keyword_list[i] = '%23' + keyword[1:-1] + '%23'
