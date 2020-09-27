@@ -22,8 +22,9 @@ ITEM_PIPELINES = {
     # 'weibo.pipelines.MyImagesPipeline': 304,
     # 'weibo.pipelines.MyVideoPipeline': 305
 }
-# 要搜索的关键词列表，可写多个
-KEYWORD_LIST = ['迪丽热巴']
+# 要搜索的关键词列表，可写多个, 值可以是由关键词或话题组成的列表，也可以是包含关键词的txt文件路径，
+# 如'keyword_list.txt'，txt文件中每个关键词占一行
+KEYWORD_LIST = ['迪丽热巴']  # 或者 KEYWORD_LIST = 'keyword_list.txt'
 # 要搜索的微博类型，0代表搜索全部微博，1代表搜索全部原创微博，2代表热门微博，3代表关注人微博，4代表认证用户微博，5代表媒体微博，6代表观点微博
 WEIBO_TYPE = 1
 # 筛选结果微博中必需包含的内容，0代表不筛选，获取全部微博，1代表搜索包含图片的微博，2代表包含视频的微博，3代表包含音乐的微博，4代表包含短链接的微博
