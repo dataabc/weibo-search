@@ -35,6 +35,7 @@ class SearchSpider(scrapy.Spider):
     start_date = settings.get('START_DATE',
                               datetime.now().strftime('%Y-%m-%d'))
     end_date = settings.get('END_DATE', datetime.now().strftime('%Y-%m-%d'))
+    further_threshold = settings.get('FURTHER_THRESHOLD', 46)
     mongo_error = False
     pymongo_error = False
     mysql_error = False
@@ -100,7 +101,7 @@ class SearchSpider(scrapy.Spider):
         page_count = len(response.xpath('//ul[@class="s-scroll"]/li'))
         if is_empty:
             print('当前页面搜索结果为空')
-        elif page_count < 50:
+        elif page_count < self.further_threshold:
             # 解析当前页面
             for weibo in self.parse_weibo(response):
                 self.check_environment()
@@ -144,7 +145,7 @@ class SearchSpider(scrapy.Spider):
         page_count = len(response.xpath('//ul[@class="s-scroll"]/li'))
         if is_empty:
             print('当前页面搜索结果为空')
-        elif page_count < 50:
+        elif page_count < self.further_threshold:
             # 解析当前页面
             for weibo in self.parse_weibo(response):
                 self.check_environment()
@@ -191,7 +192,7 @@ class SearchSpider(scrapy.Spider):
         page_count = len(response.xpath('//ul[@class="s-scroll"]/li'))
         if is_empty:
             print('当前页面搜索结果为空')
-        elif page_count < 50:
+        elif page_count < self.further_threshold:
             # 解析当前页面
             for weibo in self.parse_weibo(response):
                 self.check_environment()
@@ -232,7 +233,7 @@ class SearchSpider(scrapy.Spider):
         page_count = len(response.xpath('//ul[@class="s-scroll"]/li'))
         if is_empty:
             print('当前页面搜索结果为空')
-        elif page_count < 50:
+        elif page_count < self.further_threshold:
             # 解析当前页面
             for weibo in self.parse_weibo(response):
                 self.check_environment()
