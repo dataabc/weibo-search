@@ -98,3 +98,9 @@ def standardize_date(created_at):
         time = created_at[11:]
         created_at = year + '-' + month + '-' + day + ' ' + time
     return created_at
+
+
+def str_to_time(text):
+    """将字符串转换成时间类型"""
+    result = datetime.strptime(text, '%Y-%m-%d')
+    return result

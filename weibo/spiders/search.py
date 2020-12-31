@@ -21,8 +21,7 @@ class SearchSpider(scrapy.Spider):
         if not os.path.isabs(keyword_list):
             keyword_list = os.getcwd() + os.sep + keyword_list
         if not os.path.isfile(keyword_list):
-            print('不存在%s文件' % keyword_list)
-            sys.exit()
+            sys.exit('不存在%s文件' % keyword_list)
         keyword_list = util.get_keyword_list(keyword_list)
 
     for i, keyword in enumerate(keyword_list):
@@ -35,6 +34,8 @@ class SearchSpider(scrapy.Spider):
     start_date = settings.get('START_DATE',
                               datetime.now().strftime('%Y-%m-%d'))
     end_date = settings.get('END_DATE', datetime.now().strftime('%Y-%m-%d'))
+    if util.str_to_time(start_date) > util.str_to_time(end_date):
+        sys.exit('settings.py配置错误，START_DATE值应早于或等于END_DATE值，请重新配置settings.py')
     further_threshold = settings.get('FURTHER_THRESHOLD', 46)
     mongo_error = False
     pymongo_error = False
