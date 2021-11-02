@@ -403,13 +403,12 @@ class SearchSpider(scrapy.Spider):
                 weibo['topics'] = self.get_topics(txt_sel)
                 reposts_count = sel.xpath(
                     './/a[@action-type="feed_list_forward"]/text()'
-                ).extract_first()
+                ).extract()[1]
                 try:
                     reposts_count = re.findall(r'\d+.*', reposts_count)
                 except TypeError:
-                    print('cookie无效或已过期，请按照'
-                          'https://github.com/dataabc/weibo-search#如何获取cookie'
-                          ' 获取cookie')
+                    print("无法解析转发按钮，可能是 1) 网页布局有改动 2) cookie无效或已过期。\n"
+                          "请在 https://github.com/dataabc/weibo-search 查看文档，以解决问题，")
                     raise CloseSpider()
                 weibo['reposts_count'] = reposts_count[
                     0] if reposts_count else '0'
@@ -421,8 +420,8 @@ class SearchSpider(scrapy.Spider):
                     0] if comments_count else '0'
                 attitudes_count = sel.xpath(
                     './/span[@class="woo-like-count"]/text()').extract_first()
-                weibo['attitudes_count'] = (attitudes_count
-                                            if attitudes_count else '0')
+                attitudes_count = re.findall(r'\d+.*', attitudes_count)
+                weibo['attitudes_count'] = attitudes_count[0] if attitudes_count else '0'
                 created_at = sel.xpath(
                     '(.//p[@class="from"])[last()]/a[1]/text()').extract_first(
                     ).replace(' ', '').replace('\n', '').split('前')[0]
@@ -501,8 +500,8 @@ class SearchSpider(scrapy.Spider):
                     attitudes_count = retweet_sel[0].xpath(
                         './/a[@action-type="feed_list_like"]/em/text()'
                     ).extract_first()
-                    retweet['attitudes_count'] = (attitudes_count
-                                                  if attitudes_count else '0')
+                    attitudes_count = re.findall(r'\d+.*', attitudes_count)
+                    retweet['attitudes_count'] = attitudes_count[0] if attitudes_count else '0'
                     created_at = retweet_sel[0].xpath(
                         './/p[@class="from"]/a[1]/text()').extract_first(
                         ).replace(' ', '').replace('\n', '').split('前')[0]
