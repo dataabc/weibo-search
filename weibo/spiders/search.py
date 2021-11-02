@@ -402,13 +402,15 @@ class SearchSpider(scrapy.Spider):
                 weibo['at_users'] = self.get_at_users(txt_sel)
                 weibo['topics'] = self.get_topics(txt_sel)
                 reposts_count = sel.xpath(
-                    './/a[@action-type="feed_list_forward"]/text()'
-                ).extract()[1]
+                    './/a[@action-type="feed_list_forward"]/text()').extract(
+                    )[1]
                 try:
                     reposts_count = re.findall(r'\d+.*', reposts_count)
                 except TypeError:
-                    print("无法解析转发按钮，可能是 1) 网页布局有改动 2) cookie无效或已过期。\n"
-                          "请在 https://github.com/dataabc/weibo-search 查看文档，以解决问题，")
+                    print(
+                        "无法解析转发按钮，可能是 1) 网页布局有改动 2) cookie无效或已过期。\n"
+                        "请在 https://github.com/dataabc/weibo-search 查看文档，以解决问题，"
+                    )
                     raise CloseSpider()
                 weibo['reposts_count'] = reposts_count[
                     0] if reposts_count else '0'
@@ -421,7 +423,8 @@ class SearchSpider(scrapy.Spider):
                 attitudes_count = sel.xpath(
                     './/span[@class="woo-like-count"]/text()').extract_first()
                 attitudes_count = re.findall(r'\d+.*', attitudes_count)
-                weibo['attitudes_count'] = attitudes_count[0] if attitudes_count else '0'
+                weibo['attitudes_count'] = attitudes_count[
+                    0] if attitudes_count else '0'
                 created_at = sel.xpath(
                     '(.//p[@class="from"])[last()]/a[1]/text()').extract_first(
                     ).replace(' ', '').replace('\n', '').split('前')[0]
@@ -434,11 +437,11 @@ class SearchSpider(scrapy.Spider):
                     './/div[@class="media media-piclist"]')
                 if is_exist_pic:
                     pics = is_exist_pic[0].xpath('ul[1]/li/img/@src').extract()
-                    pics = [pic[2:] for pic in pics]
+                    pics = [pic[8:] for pic in pics]
                     pics = [
                         re.sub(r'/.*?/', '/large/', pic, 1) for pic in pics
                     ]
-                    pics = ['http://' + pic for pic in pics]
+                    pics = ['https://' + pic for pic in pics]
                 video_url = ''
                 is_exist_video = sel.xpath(
                     './/div[@class="thumbnail"]/a/@action-data')
@@ -501,7 +504,8 @@ class SearchSpider(scrapy.Spider):
                         './/a[@action-type="feed_list_like"]/em/text()'
                     ).extract_first()
                     attitudes_count = re.findall(r'\d+.*', attitudes_count)
-                    retweet['attitudes_count'] = attitudes_count[0] if attitudes_count else '0'
+                    retweet['attitudes_count'] = attitudes_count[
+                        0] if attitudes_count else '0'
                     created_at = retweet_sel[0].xpath(
                         './/p[@class="from"]/a[1]/text()').extract_first(
                         ).replace(' ', '').replace('\n', '').split('前')[0]
