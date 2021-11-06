@@ -403,7 +403,8 @@ class SearchSpider(scrapy.Spider):
                 weibo['topics'] = self.get_topics(txt_sel)
                 reposts_count = sel.xpath(
                     './/a[@action-type="feed_list_forward"]/text()').extract(
-                    )[1]
+                    )
+                reposts_count = "".join(reposts_count)
                 try:
                     reposts_count = re.findall(r'\d+.*', reposts_count)
                 except TypeError:
