@@ -402,8 +402,7 @@ class SearchSpider(scrapy.Spider):
                 weibo['at_users'] = self.get_at_users(txt_sel)
                 weibo['topics'] = self.get_topics(txt_sel)
                 reposts_count = sel.xpath(
-                    './/a[@action-type="feed_list_forward"]/text()').extract(
-                    )
+                    './/a[@action-type="feed_list_forward"]/text()').extract()
                 reposts_count = "".join(reposts_count)
                 try:
                     reposts_count = re.findall(r'\d+.*', reposts_count)
@@ -423,7 +422,10 @@ class SearchSpider(scrapy.Spider):
                     0] if comments_count else '0'
                 attitudes_count = sel.xpath(
                     './/span[@class="woo-like-count"]/text()').extract_first()
-                attitudes_count = re.findall(r'\d+.*', attitudes_count)
+                if attitudes_count:
+                    attitudes_count = re.findall(r'\d+.*', attitudes_count)
+                else:
+                    attitudes_count = '0'
                 weibo['attitudes_count'] = attitudes_count[
                     0] if attitudes_count else '0'
                 created_at = sel.xpath(
@@ -504,7 +506,10 @@ class SearchSpider(scrapy.Spider):
                     attitudes_count = retweet_sel[0].xpath(
                         './/a[@action-type="feed_list_like"]/em/text()'
                     ).extract_first()
-                    attitudes_count = re.findall(r'\d+.*', attitudes_count)
+                    if attitudes_count:
+                        attitudes_count = re.findall(r'\d+.*', attitudes_count)
+                    else:
+                        attitudes_count = '0'
                     retweet['attitudes_count'] = attitudes_count[
                         0] if attitudes_count else '0'
                     created_at = retweet_sel[0].xpath(
