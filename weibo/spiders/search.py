@@ -450,7 +450,7 @@ class SearchSpider(scrapy.Spider):
                 if is_exist_video:
                     video_url = is_exist_video.extract_first()
                     video_url = re.findall(r"src:\'(.*?)\'", video_url)[0]
-                    video_url = 'http://' + video_url
+                    video_url = 'http:' + video_url
                 if not retweet_sel:
                     weibo['pics'] = pics
                     weibo['video_url'] = video_url
