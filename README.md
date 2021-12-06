@@ -110,11 +110,18 @@ $ scrapy crawl search -s JOBDIR=crawls/search
 ```
 其实只运行“scrapy crawl search”也可以，只是上述方式在结束时可以保存进度，下次运行时会在程序上次的地方继续获取。注意，如果想要保存进度，请使用“Ctrl + C”**一次**，注意是**一次**。按下“Ctrl + C”一次后，程序会继续运行一会，主要用来保存获取的数据、保存进度等操作，请耐心等待。下次再运行时，只要再运行上面的指令就可以恢复上次的进度。
 ## 如何获取cookie
-1.用Chrome打开<https://passport.weibo.cn/signin/login>；<br>
-2.输入微博的用户名、密码，登录，如图所示：
-![](https://picture.cognize.me/cognize/github/weibospider/cookie1.png)
-登录成功后会跳转到<https://m.weibo.cn>;<br>
-3.按F12键打开Chrome开发者工具，在地址栏输入并跳转到<https://weibo.cn>，跳转后会显示如下类似界面:
-![](https://picture.cognize.me/cognize/github/weibospider/cookie2.png)
-4.依此点击Chrome开发者工具中的Network->Name中的weibo.cn->Headers->Request Headers，"Cookie:"后的值即为我们要找的cookie值，复制即可，如图所示：
-![](https://picture.cognize.me/cognize/github/weibospider/cookie3.png)
+1. 用Chrome打开 https://weibo.com/
+2. 点击"立即登录", 完成私信验证或手机验证码验证, 进入新版微博. 如下图所示:
+<img src="https://user-images.githubusercontent.com/41314224/144813569-cfb5ad32-22f0-4841-afa9-83184b2ccf6f.png" width="400px" alt="...">
+3. 按F12打开开发者工具, 在开发者工具的 Network->Name->weibo.cn->Headers->Request Headers, 找到"Cookie:"后的值, 这就是我们要找的cookie值, 复制即可, 如图所示:
+<img src="https://picture.cognize.me/cognize/github/weibospider/cookie3.png" width="400px" alt="...">
+
+> ## 兼容性说明: 获取旧版微博的Cookie
+> 1.用Chrome打开<https://passport.weibo.cn/signin/login>；<br>
+> 2.输入微博的用户名、密码，登录，如图所示：
+> ![](https://picture.cognize.me/cognize/github/weibospider/cookie1.png)
+> 登录成功后会跳转到<https://m.weibo.cn>;<br>
+> 3.按F12键打开Chrome开发者工具，在地址栏输入并跳转到<https://weibo.cn>，跳转后会显示如下类似界面:
+> ![](https://picture.cognize.me/cognize/github/weibospider/cookie2.png)
+> 4.依此点击Chrome开发者工具中的Network->Name中的weibo.cn->Headers->Request Headers，"Cookie:"后的值即为我们要找的cookie值，复制即可，如图所示：
+> ![](https://picture.cognize.me/cognize/github/weibospider/cookie3.png)
