@@ -420,8 +420,7 @@ class SearchSpider(scrapy.Spider):
                 comments_count = re.findall(r'\d+.*', comments_count)
                 weibo['comments_count'] = comments_count[
                     0] if comments_count else '0'
-                attitudes_count = sel.xpath(
-                    './/span[@class="woo-like-count"]/text()').extract_first()
+                attitudes_count = sel.xpath('.//a//em/text()').extract_first()
                 if attitudes_count:
                     attitudes_count = re.findall(r'\d+.*', attitudes_count)
                 else:
