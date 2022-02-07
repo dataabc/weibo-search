@@ -36,6 +36,9 @@ class SearchSpider(scrapy.Spider):
     end_date = settings.get('END_DATE', datetime.now().strftime('%Y-%m-%d'))
     if util.str_to_time(start_date) > util.str_to_time(end_date):
         sys.exit('settings.py配置错误，START_DATE值应早于或等于END_DATE值，请重新配置settings.py')
+    time_range = settings.get("TIME_RANGE")
+    if time_range[1] < time_range[0]:
+        sys.exit('settings.py配置错误，TIME_RANGE的结束时间应早于开始值，请重新配置settings.py')
     further_threshold = settings.get('FURTHER_THRESHOLD', 46)
     mongo_error = False
     pymongo_error = False
@@ -159,9 +162,10 @@ class SearchSpider(scrapy.Spider):
                                      callback=self.parse_page,
                                      meta={'keyword': keyword})
         else:
-            start_date_str = date + '-0'
+            [begin, end] = self.time_range
+            start_date_str = date + f'-{begin}'
             start_date = datetime.strptime(start_date_str, '%Y-%m-%d-%H')
-            for i in range(1, 25):
+            for i in range(0, end - begin):
                 start_str = start_date.strftime('%Y-%m-%d-X%H').replace(
                     'X0', 'X').replace('X', '')
                 start_date = start_date + timedelta(hours=1)
