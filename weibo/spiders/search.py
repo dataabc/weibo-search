@@ -446,13 +446,11 @@ class SearchSpider(scrapy.Spider):
                     ]
                     pics = ['https://' + pic for pic in pics]
                 video_url = ''
-                is_exist_video = sel.xpath(
-                    './/div[@class="thumbnail"]/a/@action-data')
+                is_exist_video = sel.xpath('.//div[@class="thumbnail"]/a/video-player')
                 if is_exist_video:
                     video_url = is_exist_video.extract_first()
-                    video_url = unquote(
-                        str(video_url)).split('video_src=//')[-1]
-                    video_url = 'http://' + video_url
+                    video_url = re.findall(r"src:\'(.*?)\'", video_url)[0]
+                    video_url = 'http:' + video_url
                 if not retweet_sel:
                     weibo['pics'] = pics
                     weibo['video_url'] = video_url
