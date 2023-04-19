@@ -354,7 +354,7 @@ class SearchSpider(scrapy.Spider):
                 weibo = WeiboItem()
                 weibo['id'] = sel.xpath('@mid').extract_first()
                 weibo['bid'] = sel.xpath(
-                    './/p[@class="from"]/a[1]/@href').extract_first(
+                    './/div[@class="from"]/a[1]/@href').extract_first(
                     ).split('/')[-1].split('?')[0]
                 weibo['user_id'] = info[0].xpath(
                     'div[2]/a/@href').extract_first().split('?')[0].split(
@@ -421,15 +421,15 @@ class SearchSpider(scrapy.Spider):
                 weibo['comments_count'] = comments_count[
                     0] if comments_count else '0'
                 attitudes_count = sel.xpath(
-                    './/a[@action-type="feed_list_like"]/text()').extract_first()
+                    './/a[@action-type="feed_list_like"]/button/span[2]/text()').extract_first()
                 attitudes_count = re.findall(r'\d+.*', attitudes_count)
                 weibo['attitudes_count'] = attitudes_count[
                     0] if attitudes_count else '0'
                 created_at = sel.xpath(
-                    './/p[@class="from"]/a[1]/text()').extract_first(
+                    './/div[@class="from"]/a[1]/text()').extract_first(
                     ).replace(' ', '').replace('\n', '').split('前')[0]
                 weibo['created_at'] = util.standardize_date(created_at)
-                source = sel.xpath('.//p[@class="from"]/a[2]/text()'
+                source = sel.xpath('.//div[@class="from"]/a[2]/text()'
                                    ).extract_first()
                 weibo['source'] = source if source else ''
                 pics = ''
