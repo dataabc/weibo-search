@@ -5,7 +5,9 @@ import sys
 from datetime import datetime, timedelta
 from urllib.parse import unquote
 
+import requests
 import scrapy
+
 import weibo.utils.util as util
 from scrapy.exceptions import CloseSpider
 from scrapy.utils.project import get_project_settings
@@ -284,6 +286,20 @@ class SearchSpider(scrapy.Spider):
                                      callback=self.parse_page,
                                      meta={'keyword': keyword})
 
+    def get_ip(self, bid):
+        url = f"https://weibo.com/ajax/statuses/show?id={bid}&locale=zh-CN"
+        response = requests.get(url, headers=self.settings.get('DEFAULT_REQUEST_HEADERS'))
+        if response.status_code != 200:
+            return ""
+        try:
+            data = response.json()
+        except requests.exceptions.JSONDecodeError:
+            return ""
+        ip_str = data.get("region_name", "")
+        if ip_str:
+            ip_str = ip_str.split()[-1]
+        return ip_str
+
     def get_article_url(self, selector):
         """获取微博头条文章url"""
         article_url = ''
@@ -353,12 +369,13 @@ class SearchSpider(scrapy.Spider):
             if info:
                 weibo = WeiboItem()
                 weibo['id'] = sel.xpath('@mid').extract_first()
-                weibo['bid'] = sel.xpath(
+                bid = sel.xpath(
                     './/div[@class="from"]/a[1]/@href').extract_first(
-                    ).split('/')[-1].split('?')[0]
+                ).split('/')[-1].split('?')[0]
+                weibo['bid'] = bid
                 weibo['user_id'] = info[0].xpath(
                     'div[2]/a/@href').extract_first().split('?')[0].split(
-                        '/')[-1]
+                    '/')[-1]
                 weibo['screen_name'] = info[0].xpath(
                     'div[2]/a/@nick-name').extract_first()
                 txt_sel = sel.xpath('.//p[@class="txt"]')[0]
@@ -390,7 +407,7 @@ class SearchSpider(scrapy.Spider):
                         is_long_weibo = True
                 weibo['text'] = txt_sel.xpath(
                     'string(.)').extract_first().replace('\u200b', '').replace(
-                        '\ue627', '')
+                    '\ue627', '')
                 weibo['article_url'] = self.get_article_url(txt_sel)
                 weibo['location'] = self.get_location(txt_sel)
                 if weibo['location']:
@@ -427,7 +444,7 @@ class SearchSpider(scrapy.Spider):
                     0] if attitudes_count else '0'
                 created_at = sel.xpath(
                     './/div[@class="from"]/a[1]/text()').extract_first(
-                    ).replace(' ', '').replace('\n', '').split('前')[0]
+                ).replace(' ', '').replace('\n', '').split('前')[0]
                 weibo['created_at'] = util.standardize_date(created_at)
                 source = sel.xpath('.//div[@class="from"]/a[2]/text()'
                                    ).extract_first()
@@ -464,7 +481,7 @@ class SearchSpider(scrapy.Spider):
                     ).extract_first()[4:]
                     retweet['bid'] = retweet_sel[0].xpath(
                         './/p[@class="from"]/a/@href').extract_first().split(
-                            '/')[-1].split('?')[0]
+                        '/')[-1].split('?')[0]
                     info = retweet_sel[0].xpath(
                         './/div[@node-type="feed_list_forwardContent"]/a[1]'
                     )[0]
@@ -475,7 +492,7 @@ class SearchSpider(scrapy.Spider):
                     retweet['text'] = retweet_txt_sel.xpath(
                         'string(.)').extract_first().replace('\u200b',
                                                              '').replace(
-                                                                 '\ue627', '')
+                        '\ue627', '')
                     retweet['article_url'] = self.get_article_url(
                         retweet_txt_sel)
                     retweet['location'] = self.get_location(retweet_txt_sel)
@@ -507,7 +524,7 @@ class SearchSpider(scrapy.Spider):
                         0] if attitudes_count else '0'
                     created_at = retweet_sel[0].xpath(
                         './/p[@class="from"]/a[1]/text()').extract_first(
-                        ).replace(' ', '').replace('\n', '').split('前')[0]
+                    ).replace(' ', '').replace('\n', '').split('前')[0]
                     retweet['created_at'] = util.standardize_date(created_at)
                     source = retweet_sel[0].xpath(
                         './/p[@class="from"]/a[2]/text()').extract_first()
@@ -517,5 +534,6 @@ class SearchSpider(scrapy.Spider):
                     retweet['retweet_id'] = ''
                     yield {'weibo': retweet, 'keyword': keyword}
                     weibo['retweet_id'] = retweet['id']
+                weibo["ip"] = self.get_ip(bid)
                 print(weibo)
                 yield {'weibo': weibo, 'keyword': keyword}

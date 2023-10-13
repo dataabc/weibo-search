@@ -27,3 +27,4 @@ class WeiboItem(scrapy.Item):
     pics = scrapy.Field()
     video_url = scrapy.Field()
     retweet_id = scrapy.Field()
+    ip = scrapy.Field()
