@@ -378,6 +378,18 @@ class SearchSpider(scrapy.Spider):
                     '/')[-1]
                 weibo['screen_name'] = info[0].xpath(
                     'div[2]/a/@nick-name').extract_first()
+                user_auth = info[0].xpath(
+                    'div[2]/a/span/svg/use/@xlink:href').extract_first()
+                if user_auth == '#woo_svg_vblue':
+                    weibo['user_authentication'] = '蓝V'
+                elif user_auth == '#woo_svg_vyellow':
+                    weibo['user_authentication'] = '黄V'
+                elif user_auth == '#woo_svg_vorange':
+                    weibo['user_authentication'] = '红V'
+                elif user_auth == '#woo_svg_vgold':
+                    weibo['user_authentication'] = '金V'
+                else:
+                    weibo['user_authentication'] = '普通用户'
                 txt_sel = sel.xpath('.//p[@class="txt"]')[0]
                 retweet_sel = sel.xpath('.//div[@class="card-comment"]')
                 retweet_txt_sel = ''
