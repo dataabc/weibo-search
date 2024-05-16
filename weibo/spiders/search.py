@@ -378,8 +378,12 @@ class SearchSpider(scrapy.Spider):
                     '/')[-1]
                 weibo['screen_name'] = info[0].xpath(
                     'div[2]/a/@nick-name').extract_first()
+                namespaces = {
+                    'xlink': 'http://www.w3.org/1999/xlink'
+                }
+
                 user_auth = info[0].xpath(
-                    'div[2]/a/span/svg/use/@xlink:href').extract_first()
+                    'div[2]/a/span/svg/use/@xlink:href', namespaces=namespaces).extract_first()
                 if user_auth == '#woo_svg_vblue':
                     weibo['user_authentication'] = '蓝V'
                 elif user_auth == '#woo_svg_vyellow':
