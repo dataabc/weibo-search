@@ -28,6 +28,7 @@ class CsvPipeline(object):
             is_first_write = 1
         else:
             is_first_write = 0
+
         if item:
             with open(file_path, 'a', encoding='utf-8-sig', newline='') as f:
                 writer = csv.writer(f)
@@ -35,13 +36,32 @@ class CsvPipeline(object):
                     header = [
                         'id', 'bid', 'user_id', '用户昵称', '微博正文', '头条文章url',
                         '发布位置', '艾特用户', '话题', '转发数', '评论数', '点赞数', '发布时间',
-                        '发布工具', '微博图片url', '微博视频url', 'retweet_id', 'ip'
+                        '发布工具', '微博图片url', '微博视频url', 'retweet_id', 'ip', 'user_authentication'
                     ]
                     writer.writerow(header)
-                writer.writerow(
-                    [item['weibo'][key] for key in item['weibo'].keys()])
-        return item
 
+                writer.writerow([
+                    item['weibo'].get('id', ''),
+                    item['weibo'].get('bid', ''),
+                    item['weibo'].get('user_id', ''),
+                    item['weibo'].get('screen_name', ''),
+                    item['weibo'].get('text', ''),
+                    item['weibo'].get('article_url', ''),
+                    item['weibo'].get('location', ''),
+                    item['weibo'].get('at_users', ''),
+                    item['weibo'].get('topics', ''),
+                    item['weibo'].get('reposts_count', ''),
+                    item['weibo'].get('comments_count', ''),
+                    item['weibo'].get('attitudes_count', ''),
+                    item['weibo'].get('created_at', ''),
+                    item['weibo'].get('source', ''),
+                    ','.join(item['weibo'].get('pics', [])),
+                    item['weibo'].get('video_url', ''),
+                    item['weibo'].get('retweet_id', ''),
+                    item['weibo'].get('ip', ''),
+                    item['weibo'].get('user_authentication', '')
+                ])
+        return item
 
 class MyImagesPipeline(ImagesPipeline):
     def get_media_requests(self, item, info):
