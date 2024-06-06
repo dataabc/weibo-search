@@ -536,22 +536,21 @@ class SearchSpider(scrapy.Spider):
                     weibo['retweet_id'] = retweet['id']
                 weibo["ip"] = self.get_ip(bid)
 
-            avator = sel.xpath(
-                "div[@class='card']/div[@class='card-feed']/div[@class='avator']"
-            )
-            # print(avator.extract())
-            if avator:
-                user_auth = avator.xpath('.//svg/@id').extract_first()
-                print(user_auth)
-                if user_auth == 'woo_svg_vblue':
-                    weibo['user_authentication'] = '蓝V'
-                elif user_auth == 'woo_svg_vyellow':
-                    weibo['user_authentication'] = '黄V'
-                elif user_auth == 'woo_svg_vorange':
-                    weibo['user_authentication'] = '红V'
-                elif user_auth == 'woo_svg_vgold':
-                    weibo['user_authentication'] = '金V'
-                else:
-                    weibo['user_authentication'] = '普通用户'
-            print(weibo)
-            yield {'weibo': weibo, 'keyword': keyword}
+                avator = sel.xpath(
+                    "div[@class='card']/div[@class='card-feed']/div[@class='avator']"
+                )
+                if avator:
+                    user_auth = avator.xpath('.//svg/@id').extract_first()
+                    print(user_auth)
+                    if user_auth == 'woo_svg_vblue':
+                        weibo['user_authentication'] = '蓝V'
+                    elif user_auth == 'woo_svg_vyellow':
+                        weibo['user_authentication'] = '黄V'
+                    elif user_auth == 'woo_svg_vorange':
+                        weibo['user_authentication'] = '红V'
+                    elif user_auth == 'woo_svg_vgold':
+                        weibo['user_authentication'] = '金V'
+                    else:
+                        weibo['user_authentication'] = '普通用户'
+                print(weibo)
+                yield {'weibo': weibo, 'keyword': keyword}
