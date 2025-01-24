@@ -172,7 +172,9 @@ class MysqlPipeline(object):
                 comments_count INT,
                 reposts_count INT,
                 retweet_id varchar(20),
-                PRIMARY KEY (id)
+                PRIMARY KEY (id),
+                ip varchar(100),
+                user_authentication varchar(100)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"""
         self.cursor.execute(sql)
 
