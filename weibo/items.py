@@ -29,3 +29,5 @@ class WeiboItem(scrapy.Item):
     retweet_id = scrapy.Field()
     ip = scrapy.Field()
     user_authentication = scrapy.Field()
+    vip_type = scrapy.Field()
+    vip_level = scrapy.Field()
