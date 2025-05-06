@@ -359,6 +359,31 @@ class SearchSpider(scrapy.Spider):
             topics = ','.join(topic_list)
         return topics
 
+    def get_vip(self, selector):
+        """获取用户的VIP类型和等级信息"""
+        vip_type = "非会员"
+        vip_level = 0
+
+        vip_container = selector.xpath('.//div[@class="user_vip_icon_container"]')
+        if vip_container:
+            svvip_img = vip_container.xpath('.//img[contains(@src, "svvip_")]')
+            if svvip_img:
+                vip_type = "超级会员"
+                src = svvip_img.xpath('@src').extract_first()
+                level_match = re.search(r'svvip_(\d+)\.png', src)
+                if level_match:
+                    vip_level = int(level_match.group(1))
+            else:
+                vip_img = vip_container.xpath('.//img[contains(@src, "vip_")]')
+                if vip_img:
+                    vip_type = "会员"
+                    src = vip_img.xpath('@src').extract_first()
+                    level_match = re.search(r'vip_(\d+)\.png', src)
+                    if level_match:
+                        vip_level = int(level_match.group(1))
+
+        return vip_type, vip_level
+
     def parse_weibo(self, response):
         """解析网页中的微博信息"""
         keyword = response.meta.get('keyword')
@@ -378,6 +403,8 @@ class SearchSpider(scrapy.Spider):
                     '/')[-1]
                 weibo['screen_name'] = info[0].xpath(
                     'div[2]/a/@nick-name').extract_first()
+                # 获取VIP信息
+                weibo['vip_type'], weibo['vip_level'] = self.get_vip(info[0])
                 txt_sel = sel.xpath('.//p[@class="txt"]')[0]
                 retweet_sel = sel.xpath('.//div[@class="card-comment"]')
                 retweet_txt_sel = ''
@@ -386,6 +413,7 @@ class SearchSpider(scrapy.Spider):
                         './/p[@class="txt"]')[0]
                 content_full = sel.xpath(
                     './/p[@node-type="feed_list_content_full"]')
+
                 is_long_weibo = False
                 is_long_retweet = False
                 if content_full:
@@ -489,6 +517,8 @@ class SearchSpider(scrapy.Spider):
                         '@href').extract_first().split('/')[-1]
                     retweet['screen_name'] = info.xpath(
                         '@nick-name').extract_first()
+                    # 获取VIP信息
+                    retweet['vip_type'], retweet['vip_level'] = self.get_vip(info)
                     retweet['text'] = retweet_txt_sel.xpath(
                         'string(.)').extract_first().replace('\u200b',
                                                              '').replace(
