@@ -4,6 +4,7 @@
 - 写入**csv文件**（默认）
 - 写入**MySQL数据库**（可选）
 - 写入**MongoDB数据库**（可选）
+- 写入**Sqlite数据库**（可选，无需外部安装，相比MySQL和MongoDB更方便）
 - 下载微博中的**图片**（可选）
 - 下载微博中的**视频**（可选）
 
@@ -40,7 +41,7 @@ $ git clone https://github.com/dataabc/weibo-search.git
 $ pip install scrapy
 ```
 ### 3.安装依赖
-```
+```bash
 $ pip install -r requirements.txt
 ```
 

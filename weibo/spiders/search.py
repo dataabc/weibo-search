@@ -43,6 +43,7 @@ class SearchSpider(scrapy.Spider):
     pymongo_error = False
     mysql_error = False
     pymysql_error = False
+    sqlite3_error = False
 
     def start_requests(self):
         start_date = datetime.strptime(self.start_date, '%Y-%m-%d')
@@ -93,6 +94,9 @@ class SearchSpider(scrapy.Spider):
             raise CloseSpider()
         if self.mysql_error:
             print('系统中可能没有安装或正确配置MySQL数据库，请先根据系统环境安装或配置MySQL，再运行程序')
+            raise CloseSpider()
+        if self.sqlite3_error:
+            print('系统中可能没有安装或正确配置SQLite3数据库，请先根据系统环境安装或配置SQLite3，尝试 pip install sqlite，再运行程序')
             raise CloseSpider()
 
     def parse(self, response):
