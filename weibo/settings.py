@@ -21,7 +21,7 @@ ITEM_PIPELINES = {
     # 'weibo.pipelines.MongoPipeline': 303,
     # 'weibo.pipelines.MyImagesPipeline': 304,
     # 'weibo.pipelines.MyVideoPipeline': 305,
-    'weibo.pipelines.SQLitePipeline': 306
+    # 'weibo.pipelines.SQLitePipeline': 306
 }
 # 要搜索的关键词列表，可写多个, 值可以是由关键词或话题组成的列表，也可以是包含关键词的txt文件路径，
 # 如'keyword_list.txt'，txt文件中每个关键词占一行
