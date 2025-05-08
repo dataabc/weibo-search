@@ -66,6 +66,67 @@ class CsvPipeline(object):
                 ])
         return item
 
+class SQLitePipeline(object):
+    def open_spider(self, spider):
+        try:
+            import sqlite3
+            # 在结果文件目录下创建SQLite数据库
+            base_dir = '结果文件'
+            if not os.path.isdir(base_dir):
+                os.makedirs(base_dir)
+            db_name = settings.get('SQLITE_DATABASE', 'weibo.db')
+            self.conn = sqlite3.connect(os.path.join(base_dir, db_name))
+            self.cursor = self.conn.cursor()
+            # 创建表
+            sql = """
+            CREATE TABLE IF NOT EXISTS weibo (
+                id varchar(20) NOT NULL PRIMARY KEY,
+                bid varchar(12) NOT NULL,
+                user_id varchar(20),
+                screen_name varchar(30),
+                text varchar(2000),
+                article_url varchar(100),
+                topics varchar(200),
+                at_users varchar(1000),
+                pics varchar(3000),
+                video_url varchar(1000),
+                location varchar(100),
+                created_at DATETIME,
+                source varchar(30),
+                attitudes_count INTEGER,
+                comments_count INTEGER,
+                reposts_count INTEGER,
+                retweet_id varchar(20),
+                ip varchar(100),
+                user_authentication varchar(100),
+                vip_type varchar(50),
+                vip_level INTEGER
+            )"""
+            self.cursor.execute(sql)
+            self.conn.commit()
+        except Exception as e:
+            print(f"SQLite数据库创建失败: {e}")
+            spider.sqlite_error = True
+
+
+    def process_item(self, item, spider):
+        data = dict(item['weibo'])
+        data['pics'] = ','.join(data['pics'])
+        keys = ', '.join(data.keys())
+        placeholders = ', '.join(['?'] * len(data))
+        sql = f"""INSERT OR REPLACE INTO weibo ({keys}) 
+                 VALUES ({placeholders})"""
+        try:
+            self.cursor.execute(sql, tuple(data.values()))
+            self.conn.commit()
+        except Exception as e:
+            print(f"SQLite保存出错: {e}")
+            spider.sqlite_error = True
+            self.conn.rollback()
+
+    def close_spider(self, spider):
+        self.conn.close()
+
 class MyImagesPipeline(ImagesPipeline):
     def get_media_requests(self, item, info):
         if len(item['weibo']['pics']) == 1:

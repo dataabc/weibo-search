@@ -12,7 +12,7 @@ DEFAULT_REQUEST_HEADERS = {
     'Accept':
     'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
     'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8,en-US;q=0.7',
-    'cookie': 'your cookie'
+    'cookie': 'your_cookie_here',
 }
 ITEM_PIPELINES = {
     'weibo.pipelines.DuplicatesPipeline': 300,
@@ -20,7 +20,8 @@ ITEM_PIPELINES = {
     # 'weibo.pipelines.MysqlPipeline': 302,
     # 'weibo.pipelines.MongoPipeline': 303,
     # 'weibo.pipelines.MyImagesPipeline': 304,
-    # 'weibo.pipelines.MyVideoPipeline': 305
+    # 'weibo.pipelines.MyVideoPipeline': 305,
+    # 'weibo.pipelines.SQLitePipeline': 306
 }
 # 要搜索的关键词列表，可写多个, 值可以是由关键词或话题组成的列表，也可以是包含关键词的txt文件路径，
 # 如'keyword_list.txt'，txt文件中每个关键词占一行
@@ -51,3 +52,5 @@ FILES_STORE = './'
 # MYSQL_USER = 'root'
 # MYSQL_PASSWORD = '123456'
 # MYSQL_DATABASE = 'weibo'
+# 配置SQLite数据库
+# SQLITE_DATABASE = 'weibo.db'
