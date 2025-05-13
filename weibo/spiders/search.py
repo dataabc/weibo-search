@@ -39,11 +39,20 @@ class SearchSpider(scrapy.Spider):
     if util.str_to_time(start_date) > util.str_to_time(end_date):
         sys.exit('settings.py配置错误，START_DATE值应早于或等于END_DATE值，请重新配置settings.py')
     further_threshold = settings.get('FURTHER_THRESHOLD', 46)
+    limit_result = settings.get('LIMIT_RESULT', 0)
+    result_count = 0
     mongo_error = False
     pymongo_error = False
     mysql_error = False
     pymysql_error = False
     sqlite3_error = False
+
+    def check_limit(self):
+        """检查是否达到爬取结果数量限制"""
+        if self.limit_result > 0 and self.result_count > self.limit_result:
+            print(f'已达到爬取结果数量限制：{self.limit_result}条，停止爬取')
+            raise CloseSpider('已达到爬取结果数量限制')
+        return False
 
     def start_requests(self):
         start_date = datetime.strptime(self.start_date, '%Y-%m-%d')
@@ -96,7 +105,8 @@ class SearchSpider(scrapy.Spider):
             print('系统中可能没有安装或正确配置MySQL数据库，请先根据系统环境安装或配置MySQL，再运行程序')
             raise CloseSpider()
         if self.sqlite3_error:
-            print('系统中可能没有安装或正确配置SQLite3数据库，请先根据系统环境安装或配置SQLite3，尝试 pip install sqlite，再运行程序')
+            print(
+                '系统中可能没有安装或正确配置SQLite3数据库，请先根据系统环境安装或配置SQLite3，尝试 pip install sqlite，再运行程序')
             raise CloseSpider()
 
     def parse(self, response):
@@ -112,10 +122,16 @@ class SearchSpider(scrapy.Spider):
             # 解析当前页面
             for weibo in self.parse_weibo(response):
                 self.check_environment()
+                # 检查是否达到爬取结果数量限制
+                if self.check_limit():
+                    return
                 yield weibo
             next_url = response.xpath(
                 '//a[@class="next"]/@href').extract_first()
             if next_url:
+                # 检查是否达到爬取结果数量限制
+                if self.check_limit():
+                    return
                 next_url = self.base_url + next_url
                 yield scrapy.Request(url=next_url,
                                      callback=self.parse_page,
@@ -156,10 +172,16 @@ class SearchSpider(scrapy.Spider):
             # 解析当前页面
             for weibo in self.parse_weibo(response):
                 self.check_environment()
+                # 检查是否达到爬取结果数量限制
+                if self.check_limit():
+                    return
                 yield weibo
             next_url = response.xpath(
                 '//a[@class="next"]/@href').extract_first()
             if next_url:
+                # 检查是否达到爬取结果数量限制
+                if self.check_limit():
+                    return
                 next_url = self.base_url + next_url
                 yield scrapy.Request(url=next_url,
                                      callback=self.parse_page,
@@ -281,10 +303,16 @@ class SearchSpider(scrapy.Spider):
         else:
             for weibo in self.parse_weibo(response):
                 self.check_environment()
+                # 检查是否达到爬取结果数量限制
+                if self.check_limit():
+                    return
                 yield weibo
             next_url = response.xpath(
                 '//a[@class="next"]/@href').extract_first()
             if next_url:
+                # 检查是否达到爬取结果数量限制
+                if self.check_limit():
+                    return
                 next_url = self.base_url + next_url
                 yield scrapy.Request(url=next_url,
                                      callback=self.parse_page,
@@ -392,6 +420,10 @@ class SearchSpider(scrapy.Spider):
         """解析网页中的微博信息"""
         keyword = response.meta.get('keyword')
         for sel in response.xpath("//div[@class='card-wrap']"):
+            # 检查是否达到爬取结果数量限制
+            if self.check_limit():
+                return
+
             info = sel.xpath(
                 "div[@class='card']/div[@class='card-feed']/div[@class='content']/div[@class='info']"
             )
@@ -566,7 +598,16 @@ class SearchSpider(scrapy.Spider):
                     retweet['pics'] = pics
                     retweet['video_url'] = video_url
                     retweet['retweet_id'] = ''
+
+                    # 增加结果计数（转发微博也计入总数）
+                    self.result_count += 1
+
                     yield {'weibo': retweet, 'keyword': keyword}
+
+                    # 检查是否达到爬取结果数量限制
+                    if self.check_limit():
+                        return
+
                     weibo['retweet_id'] = retweet['id']
                 weibo["ip"] = self.get_ip(bid)
 
@@ -587,4 +628,12 @@ class SearchSpider(scrapy.Spider):
                     else:
                         weibo['user_authentication'] = '普通用户'
                 print(weibo)
+
+                # 增加结果计数（主微博）
+                self.result_count += 1
+
                 yield {'weibo': weibo, 'keyword': keyword}
+
+                # 检查是否达到爬取结果数量限制
+                if self.check_limit():
+                    return
