@@ -20,50 +20,61 @@ settings = get_project_settings()
 
 class CsvPipeline(object):
     def process_item(self, item, spider):
+        # 如果只保留正文
+        if settings.get('ONLY_TEXT'):
+            base_dir = '结果文件' + os.sep + 'only_text'
+            if not os.path.isdir(base_dir):
+                os.makedirs(base_dir)
+            file_path = base_dir + os.sep + 'weibo_text.csv'
+            first_write = not os.path.isfile(file_path)
+
+            with open(file_path, 'a', encoding='utf-8-sig', newline='') as f:
+                writer = csv.writer(f)
+                if first_write:
+                    writer.writerow(['微博正文'])
+                writer.writerow([item['weibo'].get('text', '')])
+            return item
+
+        # 原来的完整写入逻辑
         base_dir = '结果文件' + os.sep + item['keyword']
         if not os.path.isdir(base_dir):
             os.makedirs(base_dir)
         file_path = base_dir + os.sep + item['keyword'] + '.csv'
-        if not os.path.isfile(file_path):
-            is_first_write = 1
-        else:
-            is_first_write = 0
+        is_first = not os.path.isfile(file_path)
 
-        if item:
-            with open(file_path, 'a', encoding='utf-8-sig', newline='') as f:
-                writer = csv.writer(f)
-                if is_first_write:
-                    header = [
-                        'id', 'bid', 'user_id', '用户昵称', '微博正文', '头条文章url',
-                        '发布位置', '艾特用户', '话题', '转发数', '评论数', '点赞数', '发布时间',
-                        '发布工具', '微博图片url', '微博视频url', 'retweet_id', 'ip', 'user_authentication',
-                        '会员类型', '会员等级'
-                    ]
-                    writer.writerow(header)
-
-                writer.writerow([
-                    item['weibo'].get('id', ''),
-                    item['weibo'].get('bid', ''),
-                    item['weibo'].get('user_id', ''),
-                    item['weibo'].get('screen_name', ''),
-                    item['weibo'].get('text', ''),
-                    item['weibo'].get('article_url', ''),
-                    item['weibo'].get('location', ''),
-                    item['weibo'].get('at_users', ''),
-                    item['weibo'].get('topics', ''),
-                    item['weibo'].get('reposts_count', ''),
-                    item['weibo'].get('comments_count', ''),
-                    item['weibo'].get('attitudes_count', ''),
-                    item['weibo'].get('created_at', ''),
-                    item['weibo'].get('source', ''),
-                    ','.join(item['weibo'].get('pics', [])),
-                    item['weibo'].get('video_url', ''),
-                    item['weibo'].get('retweet_id', ''),
-                    item['weibo'].get('ip', ''),
-                    item['weibo'].get('user_authentication', ''),
-                    item['weibo'].get('vip_type', ''),
-                    item['weibo'].get('vip_level', 0)
-                ])
+        with open(file_path, 'a', encoding='utf-8-sig', newline='') as f:
+            writer = csv.writer(f)
+            if is_first:
+                header = [
+                    'id', 'bid', 'user_id', '用户昵称', '微博正文', '头条文章url',
+                    '发布位置', '艾特用户', '话题', '转发数', '评论数', '点赞数',
+                    '发布时间', '发布工具', '微博图片url', '微博视频url',
+                    'retweet_id', 'ip', 'user_authentication', '会员类型', '会员等级'
+                ]
+                writer.writerow(header)
+            writer.writerow([
+                item['weibo'].get('id', ''),
+                item['weibo'].get('bid', ''),
+                item['weibo'].get('user_id', ''),
+                item['weibo'].get('screen_name', ''),
+                item['weibo'].get('text', ''),
+                item['weibo'].get('article_url', ''),
+                item['weibo'].get('location', ''),
+                item['weibo'].get('at_users', ''),
+                item['weibo'].get('topics', ''),
+                item['weibo'].get('reposts_count', ''),
+                item['weibo'].get('comments_count', ''),
+                item['weibo'].get('attitudes_count', ''),
+                item['weibo'].get('created_at', ''),
+                item['weibo'].get('source', ''),
+                ','.join(item['weibo'].get('pics', [])),
+                item['weibo'].get('video_url', ''),
+                item['weibo'].get('retweet_id', ''),
+                item['weibo'].get('ip', ''),
+                item['weibo'].get('user_authentication', ''),
+                item['weibo'].get('vip_type', ''),
+                item['weibo'].get('vip_level', 0)
+            ])
         return item
 
 class SQLitePipeline(object):

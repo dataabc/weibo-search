@@ -429,6 +429,7 @@ class SearchSpider(scrapy.Spider):
             )
             if info:
                 weibo = WeiboItem()
+
                 weibo['id'] = sel.xpath('@mid').extract_first()
                 bid = sel.xpath(
                     './/div[@class="from"]/a[1]/@href').extract_first(
@@ -602,7 +603,12 @@ class SearchSpider(scrapy.Spider):
                     # 增加结果计数（转发微博也计入总数）
                     self.result_count += 1
 
-                    yield {'weibo': retweet, 'keyword': keyword}
+                    # 如果只保留正文
+                    if self.settings.get('ONLY_TEXT'):
+                        yield {'weibo': {'text': retweet['text']}, 'keyword': keyword}
+                        continue
+                    else:
+                        yield {'weibo': retweet, 'keyword': keyword}
 
                     # 检查是否达到爬取结果数量限制
                     if self.check_limit():
@@ -632,7 +638,12 @@ class SearchSpider(scrapy.Spider):
                 # 增加结果计数（主微博）
                 self.result_count += 1
 
-                yield {'weibo': weibo, 'keyword': keyword}
+                # 如果只保留正文
+                if self.settings.get('ONLY_TEXT'):
+                    # 直接只返回 text 字段
+                    yield {'weibo': {'text': weibo['text']}, 'keyword': keyword}
+                else:
+                    yield {'weibo': weibo, 'keyword': keyword}
 
                 # 检查是否达到爬取结果数量限制
                 if self.check_limit():
