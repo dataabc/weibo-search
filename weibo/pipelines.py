@@ -34,36 +34,45 @@ class CsvPipeline(object):
                 writer = csv.writer(f)
                 if is_first_write:
                     header = [
-                        'id', 'bid', 'user_id', '用户昵称', '微博正文', '头条文章url',
-                        '发布位置', '艾特用户', '话题', '转发数', '评论数', '点赞数', '发布时间',
-                        '发布工具', '微博图片url', '微博视频url', 'retweet_id', 'ip', 'user_authentication',
-                        '会员类型', '会员等级'
+                        'id', 'bid', 'user_id', '用户昵称',
+                        '性别', 'user_authentication', '认证类别', '认证身份', '粉丝数',
+                        '发帖数', '微博正文', '头条文章url', '发布位置', '艾特用户',
+                        '话题', '转发数', '评论数', '点赞数', '发布时间',
+                        '发布工具', '微博图片url', '微博视频url', 'retweet_id',
+                        'ip', '会员类型', '会员等级'
                     ]
                     writer.writerow(header)
 
-                writer.writerow([
-                    item['weibo'].get('id', ''),
-                    item['weibo'].get('bid', ''),
-                    item['weibo'].get('user_id', ''),
-                    item['weibo'].get('screen_name', ''),
-                    item['weibo'].get('text', ''),
-                    item['weibo'].get('article_url', ''),
-                    item['weibo'].get('location', ''),
-                    item['weibo'].get('at_users', ''),
-                    item['weibo'].get('topics', ''),
-                    item['weibo'].get('reposts_count', ''),
-                    item['weibo'].get('comments_count', ''),
-                    item['weibo'].get('attitudes_count', ''),
-                    item['weibo'].get('created_at', ''),
-                    item['weibo'].get('source', ''),
-                    ','.join(item['weibo'].get('pics', [])),
-                    item['weibo'].get('video_url', ''),
-                    item['weibo'].get('retweet_id', ''),
-                    item['weibo'].get('ip', ''),
-                    item['weibo'].get('user_authentication', ''),
-                    item['weibo'].get('vip_type', ''),
-                    item['weibo'].get('vip_level', 0)
-                ])
+        writer.writerow([
+            item['weibo'].get('id', ''),
+            item['weibo'].get('bid', ''),
+            item['weibo'].get('user_id', ''),
+            item['weibo'].get('screen_name', ''),
+            # 新增 ↓↓↓↓↓
+            item['weibo'].get('gender', ''),
+            item['weibo'].get('verified_type', ''),
+            item['weibo'].get('verified_reason', ''),
+            item['weibo'].get('followers_count', ''),
+            item['weibo'].get('statuses_count', ''),
+            # 新增 ↑↑↑↑↑
+            item['weibo'].get('text', ''),
+            item['weibo'].get('article_url', ''),
+            item['weibo'].get('location', ''),
+            item['weibo'].get('at_users', ''),
+            item['weibo'].get('topics', ''),
+            item['weibo'].get('reposts_count', ''),
+            item['weibo'].get('comments_count', ''),
+            item['weibo'].get('attitudes_count', ''),
+            item['weibo'].get('created_at', ''),
+            item['weibo'].get('source', ''),
+            ','.join(item['weibo'].get('pics', [])),
+            item['weibo'].get('video_url', ''),
+            item['weibo'].get('retweet_id', ''),
+            item['weibo'].get('ip', ''),
+            item['weibo'].get('user_authentication', ''),
+            item['weibo'].get('vip_type', ''),
+            item['weibo'].get('vip_level', 0)
+        ])
         return item
 
 class SQLitePipeline(object):
@@ -80,10 +89,15 @@ class SQLitePipeline(object):
             # 创建表
             sql = """
             CREATE TABLE IF NOT EXISTS weibo (
-                id varchar(20) NOT NULL PRIMARY KEY,
-                bid varchar(12) NOT NULL,
+                id varchar(20) PRIMARY KEY,
+                bid varchar(12),
                 user_id varchar(20),
                 screen_name varchar(30),
+                gender varchar(2),
+                verified_type varchar(10),
+                verified_reason varchar(100),
+                followers_count INTEGER,
+                statuses_count INTEGER,
                 text varchar(2000),
                 article_url varchar(100),
                 topics varchar(200),
@@ -219,28 +233,35 @@ class MysqlPipeline(object):
         """创建MySQL表"""
         sql = """
                 CREATE TABLE IF NOT EXISTS weibo (
-                id varchar(20) NOT NULL,
-                bid varchar(12) NOT NULL,
-                user_id varchar(20),
-                screen_name varchar(30),
-                text varchar(2000),
-                article_url varchar(100),
-                topics varchar(200),
-                at_users varchar(1000),
-                pics varchar(3000),
-                video_url varchar(1000),
-                location varchar(100),
-                created_at DATETIME,
-                source varchar(30),
-                attitudes_count INT,
-                comments_count INT,
-                reposts_count INT,
-                retweet_id varchar(20),
-                PRIMARY KEY (id),
-                ip varchar(100),
-                user_authentication varchar(100),
-                vip_type varchar(50),
-                vip_level INT
+                    id varchar(20) NOT NULL,
+                    bid varchar(12) NOT NULL,
+                    user_id varchar(20),
+                    screen_name varchar(30),
+                
+                    gender varchar(2),
+                    verified_type varchar(10),
+                    verified_reason varchar(100),
+                    followers_count INT,
+                    statuses_count INT,
+                
+                    text varchar(2000),
+                    article_url varchar(100),
+                    topics varchar(200),
+                    at_users varchar(1000),
+                    pics varchar(3000),
+                    video_url varchar(1000),
+                    location varchar(100),
+                    created_at DATETIME,
+                    source varchar(30),
+                    attitudes_count INT,
+                    comments_count INT,
+                    reposts_count INT,
+                    retweet_id varchar(20),
+                    ip varchar(100),
+                    user_authentication varchar(100),
+                    vip_type varchar(50),
+                    vip_level INT,
+                    PRIMARY KEY (id)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"""
         self.cursor.execute(sql)
 
