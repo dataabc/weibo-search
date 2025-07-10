@@ -17,7 +17,7 @@ class WeiboItem(scrapy.Item):
     gender = scrapy.Field()
     ip = scrapy.Field()
     user_authentication = scrapy.Field()
-    verified_type = scrapy.Field(
+    verified_type = scrapy.Field()
     verified_reason = scrapy.Field()
     vip_type = scrapy.Field()
     vip_level = scrapy.Field()
