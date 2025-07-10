@@ -318,6 +318,34 @@ class SearchSpider(scrapy.Spider):
                                      callback=self.parse_page,
                                      meta={'keyword': keyword})
 
+    def parse_detail(self, response):
+            """解析 m.weibo.cn/statuses/show JSON，补全 5 个用户字段"""
+            item = response.meta['item']
+            keyword = response.meta['keyword']
+        
+            try:
+                data = response.json()['data']
+            except Exception:
+                self.logger.warning("详情解析失败：%s", response.text[:120])
+                return
+        
+            user = data.get("user") or {}
+        
+            GENDER   = {"m": "男", "f": "女"}
+            VERIFIED = {-1: "普通用户", 0: "名人", 1: "政府", 2: "企业",
+                        3: "媒体",   4: "校园", 5: "网站", 6: "应用", 7: "团体（机构）"}
+        
+            # ========== 写入五个字段 ==========
+            item['gender']          = GENDER.get(user.get("gender"))
+            item['verified_type']   = VERIFIED.get(user.get("verified_type"))
+            item['verified_reason'] = user.get("verified_reason") or ""
+            item['followers_count'] = user.get("followers_count")
+            item['statuses_count']  = user.get("statuses_count")
+            # ================================
+        
+            yield {'weibo': item, 'keyword': keyword}
+
+
     def get_ip(self, bid):
         url = f"https://weibo.com/ajax/statuses/show?id={bid}&locale=zh-CN"
         response = requests.get(url, headers=self.settings.get('DEFAULT_REQUEST_HEADERS'))
@@ -632,7 +660,17 @@ class SearchSpider(scrapy.Spider):
                 # 增加结果计数（主微博）
                 self.result_count += 1
 
-                yield {'weibo': weibo, 'keyword': keyword}
+                detail_url = f"https://m.weibo.cn/statuses/show?id={id}"
+                yield scrapy.Request(
+                    url=detail_url,
+                    headers=self.settings.get('DEFAULT_REQUEST_HEADERS'),
+                    callback=self.parse_detail,
+                    meta={
+                        'item': weibo,
+                        'keyword': keyword
+                    },
+                    priority=-5
+                )
 
                 # 检查是否达到爬取结果数量限制
                 if self.check_limit():
