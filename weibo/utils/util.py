@@ -45,8 +45,8 @@ def get_keyword_list(file_name):
             lines = f.read().splitlines()
             lines = [line.decode('utf-8-sig') for line in lines]
         except UnicodeDecodeError:
-            print(u'%s文件应为utf-8编码，请先将文件编码转为utf-8再运行程序', file_name)
-            sys.exit()
+            raise ValueError('%s文件应为utf-8编码，请先将文件编码转为utf-8再运行程序' %
+                             file_name)
         keyword_list = []
         for line in lines:
             if line:

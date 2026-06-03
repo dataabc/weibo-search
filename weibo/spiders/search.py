@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
 import re
-import sys
 from datetime import datetime, timedelta
 from urllib.parse import unquote
 
@@ -17,51 +16,95 @@ from weibo.items import WeiboItem
 class SearchSpider(scrapy.Spider):
     name = 'search'
     allowed_domains = ['weibo.com']
-    settings = get_project_settings()
-    keyword_list = settings.get('KEYWORD_LIST')
-    if not isinstance(keyword_list, list):
-        if not os.path.isabs(keyword_list):
-            keyword_list = os.getcwd() + os.sep + keyword_list
-        if not os.path.isfile(keyword_list):
-            sys.exit('不存在%s文件' % keyword_list)
-        keyword_list = util.get_keyword_list(keyword_list)
-
-    for i, keyword in enumerate(keyword_list):
-        if len(keyword) > 2 and keyword[0] == '#' and keyword[-1] == '#':
-            keyword_list[i] = '%23' + keyword[1:-1] + '%23'
-    weibo_type = util.convert_weibo_type(settings.get('WEIBO_TYPE'))
-    contain_type = util.convert_contain_type(settings.get('CONTAIN_TYPE'))
-    regions = util.get_regions(settings.get('REGION'))
     base_url = 'https://s.weibo.com'
-    start_date = settings.get('START_DATE',
-                              datetime.now().strftime('%Y-%m-%d'))
-    end_date = settings.get('END_DATE', datetime.now().strftime('%Y-%m-%d'))
-    if util.str_to_time(start_date) > util.str_to_time(end_date):
-        sys.exit('settings.py配置错误，START_DATE值应早于或等于END_DATE值，请重新配置settings.py')
-    further_threshold = settings.get('FURTHER_THRESHOLD', 46)
-    limit_result = settings.get('LIMIT_RESULT', 0)
-    result_count = 0
-    mongo_error = False
-    pymongo_error = False
-    mysql_error = False
-    pymysql_error = False
-    sqlite3_error = False
+
+    @classmethod
+    def from_crawler(cls, crawler, *args, **kwargs):
+        spider = super().from_crawler(crawler, *args, **kwargs)
+        spider.configure(crawler.settings)
+        return spider
+
+    def __init__(self, *args, settings=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.configure(settings or get_project_settings())
+
+    def configure(self, settings):
+        self.project_settings = settings
+        self.keyword_list = self.load_keyword_list(
+            self.project_settings.get('KEYWORD_LIST'))
+        self.weibo_type = util.convert_weibo_type(
+            self.project_settings.get('WEIBO_TYPE'))
+        self.contain_type = util.convert_contain_type(
+            self.project_settings.get('CONTAIN_TYPE'))
+        self.regions = util.get_regions(self.project_settings.get('REGION'))
+        self.start_date = self.project_settings.get(
+            'START_DATE', datetime.now().strftime('%Y-%m-%d'))
+        self.end_date = self.project_settings.get(
+            'END_DATE', datetime.now().strftime('%Y-%m-%d'))
+        self.further_threshold = int(
+            self.project_settings.get('FURTHER_THRESHOLD', 46))
+        self.limit_result = int(self.project_settings.get('LIMIT_RESULT', 0))
+        self.fetch_ip = bool(self.project_settings.getbool('FETCH_IP', False))
+        self.ip_request_timeout = int(
+            self.project_settings.get('IP_REQUEST_TIMEOUT', 5))
+        self.result_count = 0
+        self.mongo_error = False
+        self.pymongo_error = False
+        self.mysql_error = False
+        self.pymysql_error = False
+        self.sqlite3_error = False
+
+    def load_keyword_list(self, keyword_list):
+        """Load keywords from settings or a UTF-8 text file."""
+        if not keyword_list:
+            raise CloseSpider('KEYWORD_LIST不能为空，请在settings.py中配置关键词')
+        if not isinstance(keyword_list, list):
+            if not os.path.isabs(keyword_list):
+                keyword_list = os.path.join(os.getcwd(), keyword_list)
+            if not os.path.isfile(keyword_list):
+                raise CloseSpider('不存在%s文件' % keyword_list)
+            try:
+                keyword_list = util.get_keyword_list(keyword_list)
+            except ValueError as exc:
+                raise CloseSpider(str(exc)) from exc
+        keywords = []
+        for keyword in keyword_list:
+            if not keyword:
+                continue
+            if len(keyword) > 2 and keyword[0] == '#' and keyword[-1] == '#':
+                keyword = '%23' + keyword[1:-1] + '%23'
+            keywords.append(keyword)
+        if not keywords:
+            raise CloseSpider('KEYWORD_LIST不能为空，请至少配置一个关键词')
+        return keywords
+
+    def validate_runtime_settings(self):
+        """Validate settings that are only required when the crawl starts."""
+        headers = self.project_settings.get('DEFAULT_REQUEST_HEADERS') or {}
+        cookie = headers.get('cookie', '')
+        if not cookie or cookie == 'your_cookie_here':
+            raise CloseSpider(
+                '未配置微博Cookie。请设置环境变量WEIBO_COOKIE，或在本地settings.py中配置DEFAULT_REQUEST_HEADERS["cookie"]')
+        if util.str_to_time(self.start_date) > util.str_to_time(self.end_date):
+            raise CloseSpider(
+                'settings.py配置错误，START_DATE值应早于或等于END_DATE值，请重新配置settings.py')
 
     def check_limit(self):
         """检查是否达到爬取结果数量限制"""
-        if self.limit_result > 0 and self.result_count > self.limit_result:
-            print(f'已达到爬取结果数量限制：{self.limit_result}条，停止爬取')
+        if self.limit_result > 0 and self.result_count >= self.limit_result:
+            self.logger.info('已达到爬取结果数量限制：%s条，停止爬取', self.limit_result)
             raise CloseSpider('已达到爬取结果数量限制')
         return False
 
     def start_requests(self):
+        self.validate_runtime_settings()
         start_date = datetime.strptime(self.start_date, '%Y-%m-%d')
         end_date = datetime.strptime(self.end_date,
                                      '%Y-%m-%d') + timedelta(days=1)
         start_str = start_date.strftime('%Y-%m-%d') + '-0'
         end_str = end_date.strftime('%Y-%m-%d') + '-0'
         for keyword in self.keyword_list:
-            if not self.settings.get('REGION') or '全部' in self.settings.get(
+            if not self.project_settings.get('REGION') or '全部' in self.project_settings.get(
                     'REGION'):
                 base_url = 'https://s.weibo.com/weibo?q=%s' % keyword
                 url = base_url + self.weibo_type
@@ -93,20 +136,20 @@ class SearchSpider(scrapy.Spider):
     def check_environment(self):
         """判断配置要求的软件是否已安装"""
         if self.pymongo_error:
-            print('系统中可能没有安装pymongo库，请先运行 pip install pymongo ，再运行程序')
+            self.logger.error('系统中可能没有安装pymongo库，请先运行 pip install pymongo ，再运行程序')
             raise CloseSpider()
         if self.mongo_error:
-            print('系统中可能没有安装或启动MongoDB数据库，请先根据系统环境安装或启动MongoDB，再运行程序')
+            self.logger.error('系统中可能没有安装或启动MongoDB数据库，请先根据系统环境安装或启动MongoDB，再运行程序')
             raise CloseSpider()
         if self.pymysql_error:
-            print('系统中可能没有安装pymysql库，请先运行 pip install pymysql ，再运行程序')
+            self.logger.error('系统中可能没有安装pymysql库，请先运行 pip install pymysql ，再运行程序')
             raise CloseSpider()
         if self.mysql_error:
-            print('系统中可能没有安装或正确配置MySQL数据库，请先根据系统环境安装或配置MySQL，再运行程序')
+            self.logger.error('系统中可能没有安装或正确配置MySQL数据库，请先根据系统环境安装或配置MySQL，再运行程序')
             raise CloseSpider()
         if self.sqlite3_error:
-            print(
-                '系统中可能没有安装或正确配置SQLite3数据库，请先根据系统环境安装或配置SQLite3，尝试 pip install sqlite，再运行程序')
+            self.logger.error(
+                '系统中可能没有安装或正确配置SQLite3数据库，请检查SQLITE_DATABASE配置后再运行程序')
             raise CloseSpider()
 
     def parse(self, response):
@@ -117,7 +160,7 @@ class SearchSpider(scrapy.Spider):
             '//div[@class="card card-no-result s-pt20b40"]')
         page_count = len(response.xpath('//ul[@class="s-scroll"]/li'))
         if is_empty:
-            print('当前页面搜索结果为空')
+            self.logger.info('当前页面搜索结果为空: %s', response.url)
         elif page_count < self.further_threshold:
             # 解析当前页面
             for weibo in self.parse_weibo(response):
@@ -135,7 +178,7 @@ class SearchSpider(scrapy.Spider):
                 next_url = self.base_url + next_url
                 yield scrapy.Request(url=next_url,
                                      callback=self.parse_page,
-                                     meta={'keyword': keyword})
+                                     meta=response.meta)
         else:
             start_date = datetime.strptime(self.start_date, '%Y-%m-%d')
             end_date = datetime.strptime(self.end_date, '%Y-%m-%d')
@@ -167,7 +210,7 @@ class SearchSpider(scrapy.Spider):
         date = response.meta.get('date')
         page_count = len(response.xpath('//ul[@class="s-scroll"]/li'))
         if is_empty:
-            print('当前页面搜索结果为空')
+            self.logger.info('当前页面搜索结果为空: %s', response.url)
         elif page_count < self.further_threshold:
             # 解析当前页面
             for weibo in self.parse_weibo(response):
@@ -185,7 +228,7 @@ class SearchSpider(scrapy.Spider):
                 next_url = self.base_url + next_url
                 yield scrapy.Request(url=next_url,
                                      callback=self.parse_page,
-                                     meta={'keyword': keyword})
+                                     meta=response.meta)
         else:
             start_date_str = date + '-0'
             start_date = datetime.strptime(start_date_str, '%Y-%m-%d-%H')
@@ -220,7 +263,7 @@ class SearchSpider(scrapy.Spider):
         end_time = response.meta.get('end_time')
         page_count = len(response.xpath('//ul[@class="s-scroll"]/li'))
         if is_empty:
-            print('当前页面搜索结果为空')
+            self.logger.info('当前页面搜索结果为空: %s', response.url)
         elif page_count < self.further_threshold:
             # 解析当前页面
             for weibo in self.parse_weibo(response):
@@ -232,7 +275,7 @@ class SearchSpider(scrapy.Spider):
                 next_url = self.base_url + next_url
                 yield scrapy.Request(url=next_url,
                                      callback=self.parse_page,
-                                     meta={'keyword': keyword})
+                                     meta=response.meta)
         else:
             for region in self.regions.values():
                 url = ('https://s.weibo.com/weibo?q={}&region=custom:{}:1000'
@@ -261,7 +304,7 @@ class SearchSpider(scrapy.Spider):
         province = response.meta.get('province')
         page_count = len(response.xpath('//ul[@class="s-scroll"]/li'))
         if is_empty:
-            print('当前页面搜索结果为空')
+            self.logger.info('当前页面搜索结果为空: %s', response.url)
         elif page_count < self.further_threshold:
             # 解析当前页面
             for weibo in self.parse_weibo(response):
@@ -273,7 +316,7 @@ class SearchSpider(scrapy.Spider):
                 next_url = self.base_url + next_url
                 yield scrapy.Request(url=next_url,
                                      callback=self.parse_page,
-                                     meta={'keyword': keyword})
+                                     meta=response.meta)
         else:
             for city in province['city'].values():
                 url = ('https://s.weibo.com/weibo?q={}&region=custom:{}:{}'
@@ -299,7 +342,7 @@ class SearchSpider(scrapy.Spider):
         is_empty = response.xpath(
             '//div[@class="card card-no-result s-pt20b40"]')
         if is_empty:
-            print('当前页面搜索结果为空')
+            self.logger.info('当前页面搜索结果为空: %s', response.url)
         else:
             for weibo in self.parse_weibo(response):
                 self.check_environment()
@@ -316,11 +359,20 @@ class SearchSpider(scrapy.Spider):
                 next_url = self.base_url + next_url
                 yield scrapy.Request(url=next_url,
                                      callback=self.parse_page,
-                                     meta={'keyword': keyword})
+                                     meta=response.meta)
 
     def get_ip(self, bid):
+        if not self.fetch_ip or not bid:
+            return ""
         url = f"https://weibo.com/ajax/statuses/show?id={bid}&locale=zh-CN"
-        response = requests.get(url, headers=self.settings.get('DEFAULT_REQUEST_HEADERS'))
+        try:
+            response = requests.get(
+                url,
+                headers=self.project_settings.get('DEFAULT_REQUEST_HEADERS'),
+                timeout=self.ip_request_timeout)
+        except requests.RequestException as exc:
+            self.logger.debug('IP属地请求失败 bid=%s: %s', bid, exc)
+            return ""
         if response.status_code != 200:
             return ""
         try:
@@ -335,7 +387,7 @@ class SearchSpider(scrapy.Spider):
     def get_article_url(self, selector):
         """获取微博头条文章url"""
         article_url = ''
-        text = selector.xpath('string(.)').extract_first().replace(
+        text = (selector.xpath('string(.)').extract_first() or '').replace(
             '\u200b', '').replace('\ue627', '').replace('\n',
                                                         '').replace(' ', '')
         if text.startswith('发布了头条文章'):
@@ -366,11 +418,11 @@ class SearchSpider(scrapy.Spider):
         at_users = ''
         at_list = []
         for a in a_list:
-            if len(unquote(a.xpath('@href').extract_first())) > 14 and len(
-                    a.xpath('string(.)').extract_first()) > 1:
-                if unquote(a.xpath('@href').extract_first())[14:] == a.xpath(
-                        'string(.)').extract_first()[1:]:
-                    at_user = a.xpath('string(.)').extract_first()[1:]
+            href = a.xpath('@href').extract_first() or ''
+            text = a.xpath('string(.)').extract_first() or ''
+            if len(unquote(href)) > 14 and len(text) > 1:
+                if unquote(href)[14:] == text[1:]:
+                    at_user = text[1:]
                     if at_user not in at_list:
                         at_list.append(at_user)
         if at_list:
@@ -383,7 +435,7 @@ class SearchSpider(scrapy.Spider):
         topics = ''
         topic_list = []
         for a in a_list:
-            text = a.xpath('string(.)').extract_first()
+            text = a.xpath('string(.)').extract_first() or ''
             if len(text) > 2 and text[0] == '#' and text[-1] == '#':
                 if text[1:-1] not in topic_list:
                     topic_list.append(text[1:-1])
@@ -401,7 +453,7 @@ class SearchSpider(scrapy.Spider):
             svvip_img = vip_container.xpath('.//img[contains(@src, "svvip_")]')
             if svvip_img:
                 vip_type = "超级会员"
-                src = svvip_img.xpath('@src').extract_first()
+                src = svvip_img.xpath('@src').extract_first() or ''
                 level_match = re.search(r'svvip_(\d+)\.png', src)
                 if level_match:
                     vip_level = int(level_match.group(1))
@@ -409,12 +461,28 @@ class SearchSpider(scrapy.Spider):
                 vip_img = vip_container.xpath('.//img[contains(@src, "vip_")]')
                 if vip_img:
                     vip_type = "会员"
-                    src = vip_img.xpath('@src').extract_first()
+                    src = vip_img.xpath('@src').extract_first() or ''
                     level_match = re.search(r'vip_(\d+)\.png', src)
                     if level_match:
                         vip_level = int(level_match.group(1))
 
         return vip_type, vip_level
+
+    def extract_count(self, text):
+        """Extract Weibo count text; missing or non-numeric labels become 0."""
+        matches = re.findall(r'\d+.*', text or '')
+        return matches[0] if matches else '0'
+
+    def clean_weibo_text(self, selector, is_long=False):
+        text = (selector.xpath('string(.)').extract_first() or '').replace(
+            '\u200b', '').replace('\ue627', '')
+        location = self.get_location(selector)
+        if location:
+            text = text.replace('2' + location, '')
+        text = text[2:].replace(' ', '') if len(text) >= 2 else text.strip()
+        if is_long and len(text) >= 4:
+            text = text[:-4]
+        return text, location
 
     def parse_weibo(self, response):
         """解析网页中的微博信息"""
@@ -430,18 +498,21 @@ class SearchSpider(scrapy.Spider):
             if info:
                 weibo = WeiboItem()
                 weibo['id'] = sel.xpath('@mid').extract_first()
-                bid = sel.xpath(
-                    './/div[@class="from"]/a[1]/@href').extract_first(
-                ).split('/')[-1].split('?')[0]
+                from_href = sel.xpath(
+                    './/div[@class="from"]/a[1]/@href').extract_first()
+                user_href = info[0].xpath('div[2]/a/@href').extract_first()
+                txt_nodes = sel.xpath('.//p[@class="txt"]')
+                if not weibo['id'] or not from_href or not user_href or not txt_nodes:
+                    self.logger.warning('跳过无法解析的微博卡片: %s', response.url)
+                    continue
+                bid = from_href.split('/')[-1].split('?')[0]
                 weibo['bid'] = bid
-                weibo['user_id'] = info[0].xpath(
-                    'div[2]/a/@href').extract_first().split('?')[0].split(
-                    '/')[-1]
+                weibo['user_id'] = user_href.split('?')[0].split('/')[-1]
                 weibo['screen_name'] = info[0].xpath(
-                    'div[2]/a/@nick-name').extract_first()
+                    'div[2]/a/@nick-name').extract_first() or ''
                 # 获取VIP信息
                 weibo['vip_type'], weibo['vip_level'] = self.get_vip(info[0])
-                txt_sel = sel.xpath('.//p[@class="txt"]')[0]
+                txt_sel = txt_nodes[0]
                 retweet_sel = sel.xpath('.//div[@class="card-comment"]')
                 retweet_txt_sel = ''
                 if retweet_sel and retweet_sel[0].xpath('.//p[@class="txt"]'):
@@ -469,51 +540,32 @@ class SearchSpider(scrapy.Spider):
                     else:
                         txt_sel = content_full[0]
                         is_long_weibo = True
-                weibo['text'] = txt_sel.xpath(
-                    'string(.)').extract_first().replace('\u200b', '').replace(
-                    '\ue627', '')
                 weibo['article_url'] = self.get_article_url(txt_sel)
-                weibo['location'] = self.get_location(txt_sel)
-                if weibo['location']:
-                    weibo['text'] = weibo['text'].replace(
-                        '2' + weibo['location'], '')
-                weibo['text'] = weibo['text'][2:].replace(' ', '')
-                if is_long_weibo:
-                    weibo['text'] = weibo['text'][:-4]
+                weibo['text'], weibo['location'] = self.clean_weibo_text(
+                    txt_sel, is_long_weibo)
                 weibo['at_users'] = self.get_at_users(txt_sel)
                 weibo['topics'] = self.get_topics(txt_sel)
                 reposts_count = sel.xpath(
                     './/a[@action-type="feed_list_forward"]/text()').extract()
                 reposts_count = "".join(reposts_count)
-                try:
-                    reposts_count = re.findall(r'\d+.*', reposts_count)
-                except TypeError:
-                    print(
-                        "无法解析转发按钮，可能是 1) 网页布局有改动 2) cookie无效或已过期。\n"
-                        "请在 https://github.com/dataabc/weibo-search 查看文档，以解决问题，"
-                    )
-                    raise CloseSpider()
-                weibo['reposts_count'] = reposts_count[
-                    0] if reposts_count else '0'
+                weibo['reposts_count'] = self.extract_count(reposts_count)
                 comments_count = sel.xpath(
                     './/a[@action-type="feed_list_comment"]/text()'
                 ).extract_first()
-                comments_count = re.findall(r'\d+.*', comments_count)
-                weibo['comments_count'] = comments_count[
-                    0] if comments_count else '0'
+                weibo['comments_count'] = self.extract_count(comments_count)
                 attitudes_count = sel.xpath(
                     './/a[@action-type="feed_list_like"]/button/span[2]/text()').extract_first()
-                attitudes_count = re.findall(r'\d+.*', attitudes_count)
-                weibo['attitudes_count'] = attitudes_count[
-                    0] if attitudes_count else '0'
+                weibo['attitudes_count'] = self.extract_count(attitudes_count)
                 created_at = sel.xpath(
-                    './/div[@class="from"]/a[1]/text()').extract_first(
-                ).replace(' ', '').replace('\n', '').split('前')[0]
-                weibo['created_at'] = util.standardize_date(created_at)
+                    './/div[@class="from"]/a[1]/text()').extract_first()
+                created_at = (created_at or '').replace(' ', '').replace(
+                    '\n', '').split('前')[0]
+                weibo['created_at'] = util.standardize_date(
+                    created_at) if created_at else ''
                 source = sel.xpath('.//div[@class="from"]/a[2]/text()'
                                    ).extract_first()
                 weibo['source'] = source if source else ''
-                pics = ''
+                pics = []
                 is_exist_pic = sel.xpath(
                     './/div[@class="media media-piclist"]')
                 if is_exist_pic:
@@ -527,88 +579,86 @@ class SearchSpider(scrapy.Spider):
                 is_exist_video = sel.xpath(
                     './/div[@class="thumbnail"]//video-player').extract_first()
                 if is_exist_video:
-                    video_url = re.findall(r'src:\'(.*?)\'', is_exist_video)[0]
-                    video_url = video_url.replace('&amp;', '&')
-                    video_url = 'http:' + video_url
+                    video_matches = re.findall(r'src:\'(.*?)\'', is_exist_video)
+                    if video_matches:
+                        video_url = video_matches[0].replace('&amp;', '&')
+                        video_url = 'http:' + video_url
                 if not retweet_sel:
                     weibo['pics'] = pics
                     weibo['video_url'] = video_url
                 else:
-                    weibo['pics'] = ''
+                    weibo['pics'] = []
                     weibo['video_url'] = ''
                 weibo['retweet_id'] = ''
                 if retweet_sel and retweet_sel[0].xpath(
                         './/div[@node-type="feed_list_forwardContent"]/a[1]'):
-                    retweet = WeiboItem()
-                    retweet['id'] = retweet_sel[0].xpath(
+                    retweet_id_data = retweet_sel[0].xpath(
                         './/a[@action-type="feed_list_like"]/@action-data'
-                    ).extract_first()[4:]
-                    retweet['bid'] = retweet_sel[0].xpath(
-                        './/p[@class="from"]/a/@href').extract_first().split(
-                        '/')[-1].split('?')[0]
-                    info = retweet_sel[0].xpath(
+                    ).extract_first() or ''
+                    retweet_from_href = retweet_sel[0].xpath(
+                        './/p[@class="from"]/a/@href').extract_first() or ''
+                    retweet_info = retweet_sel[0].xpath(
                         './/div[@node-type="feed_list_forwardContent"]/a[1]'
-                    )[0]
-                    retweet['user_id'] = info.xpath(
-                        '@href').extract_first().split('/')[-1]
-                    retweet['screen_name'] = info.xpath(
-                        '@nick-name').extract_first()
-                    # 获取VIP信息
-                    retweet['vip_type'], retweet['vip_level'] = self.get_vip(info)
-                    retweet['text'] = retweet_txt_sel.xpath(
-                        'string(.)').extract_first().replace('\u200b',
-                                                             '').replace(
-                        '\ue627', '')
-                    retweet['article_url'] = self.get_article_url(
-                        retweet_txt_sel)
-                    retweet['location'] = self.get_location(retweet_txt_sel)
-                    if retweet['location']:
-                        retweet['text'] = retweet['text'].replace(
-                            '2' + retweet['location'], '')
-                    retweet['text'] = retweet['text'][2:].replace(' ', '')
-                    if is_long_retweet:
-                        retweet['text'] = retweet['text'][:-4]
-                    retweet['at_users'] = self.get_at_users(retweet_txt_sel)
-                    retweet['topics'] = self.get_topics(retweet_txt_sel)
-                    reposts_count = retweet_sel[0].xpath(
-                        './/ul[@class="act s-fr"]/li[1]/a[1]/text()'
-                    ).extract_first()
-                    reposts_count = re.findall(r'\d+.*', reposts_count)
-                    retweet['reposts_count'] = reposts_count[
-                        0] if reposts_count else '0'
-                    comments_count = retweet_sel[0].xpath(
-                        './/ul[@class="act s-fr"]/li[2]/a[1]/text()'
-                    ).extract_first()
-                    comments_count = re.findall(r'\d+.*', comments_count)
-                    retweet['comments_count'] = comments_count[
-                        0] if comments_count else '0'
-                    attitudes_count = retweet_sel[0].xpath(
-                        './/a[@class="woo-box-flex woo-box-alignCenter woo-box-justifyCenter"]//span[@class="woo-like-count"]/text()'
-                    ).extract_first()
-                    attitudes_count = re.findall(r'\d+.*', attitudes_count)
-                    retweet['attitudes_count'] = attitudes_count[
-                        0] if attitudes_count else '0'
-                    created_at = retweet_sel[0].xpath(
-                        './/p[@class="from"]/a[1]/text()').extract_first(
-                    ).replace(' ', '').replace('\n', '').split('前')[0]
-                    retweet['created_at'] = util.standardize_date(created_at)
-                    source = retweet_sel[0].xpath(
-                        './/p[@class="from"]/a[2]/text()').extract_first()
-                    retweet['source'] = source if source else ''
-                    retweet['pics'] = pics
-                    retweet['video_url'] = video_url
-                    retweet['retweet_id'] = ''
+                    )
+                    if not retweet_id_data.startswith('mid=') or not retweet_from_href or not retweet_info or not retweet_txt_sel:
+                        self.logger.warning('跳过无法解析的转发微博: %s', response.url)
+                    else:
+                        retweet = WeiboItem()
+                        retweet['id'] = retweet_id_data[4:]
+                        retweet['bid'] = retweet_from_href.split(
+                            '/')[-1].split('?')[0]
+                        info = retweet_info[0]
+                        retweet_user_href = info.xpath(
+                            '@href').extract_first() or ''
+                        retweet['user_id'] = retweet_user_href.split('/')[-1]
+                        retweet['screen_name'] = info.xpath(
+                            '@nick-name').extract_first() or ''
+                        retweet['vip_type'], retweet['vip_level'] = self.get_vip(
+                            info)
+                        retweet['article_url'] = self.get_article_url(
+                            retweet_txt_sel)
+                        retweet['text'], retweet['location'] = self.clean_weibo_text(
+                            retweet_txt_sel, is_long_retweet)
+                        retweet['at_users'] = self.get_at_users(retweet_txt_sel)
+                        retweet['topics'] = self.get_topics(retweet_txt_sel)
+                        reposts_count = retweet_sel[0].xpath(
+                            './/ul[@class="act s-fr"]/li[1]/a[1]/text()'
+                        ).extract_first()
+                        retweet['reposts_count'] = self.extract_count(
+                            reposts_count)
+                        comments_count = retweet_sel[0].xpath(
+                            './/ul[@class="act s-fr"]/li[2]/a[1]/text()'
+                        ).extract_first()
+                        retweet['comments_count'] = self.extract_count(
+                            comments_count)
+                        attitudes_count = retweet_sel[0].xpath(
+                            './/a[@class="woo-box-flex woo-box-alignCenter woo-box-justifyCenter"]//span[@class="woo-like-count"]/text()'
+                        ).extract_first()
+                        retweet['attitudes_count'] = self.extract_count(
+                            attitudes_count)
+                        created_at = retweet_sel[0].xpath(
+                            './/p[@class="from"]/a[1]/text()').extract_first()
+                        created_at = (created_at or '').replace(' ', '').replace(
+                            '\n', '').split('前')[0]
+                        retweet['created_at'] = util.standardize_date(
+                            created_at) if created_at else ''
+                        source = retweet_sel[0].xpath(
+                            './/p[@class="from"]/a[2]/text()').extract_first()
+                        retweet['source'] = source if source else ''
+                        retweet['pics'] = pics
+                        retweet['video_url'] = video_url
+                        retweet['retweet_id'] = ''
+                        retweet['ip'] = ''
+                        retweet['user_authentication'] = ''
 
-                    # 增加结果计数（转发微博也计入总数）
-                    self.result_count += 1
+                        self.result_count += 1
 
-                    yield {'weibo': retweet, 'keyword': keyword}
+                        yield {'weibo': retweet, 'keyword': keyword}
 
-                    # 检查是否达到爬取结果数量限制
-                    if self.check_limit():
-                        return
+                        if self.check_limit():
+                            return
 
-                    weibo['retweet_id'] = retweet['id']
+                        weibo['retweet_id'] = retweet['id']
                 weibo["ip"] = self.get_ip(bid)
 
                 avator = sel.xpath(
@@ -616,7 +666,6 @@ class SearchSpider(scrapy.Spider):
                 )
                 if avator:
                     user_auth = avator.xpath('.//svg/@id').extract_first()
-                    print(user_auth)
                     if user_auth == 'woo_svg_vblue':
                         weibo['user_authentication'] = '蓝V'
                     elif user_auth == 'woo_svg_vyellow':
@@ -627,7 +676,8 @@ class SearchSpider(scrapy.Spider):
                         weibo['user_authentication'] = '金V'
                     else:
                         weibo['user_authentication'] = '普通用户'
-                print(weibo)
+                else:
+                    weibo['user_authentication'] = '普通用户'
 
                 # 增加结果计数（主微博）
                 self.result_count += 1
