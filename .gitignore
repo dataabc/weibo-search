@@ -217,6 +217,8 @@ instance/
 
 # Scrapy stuff:
 .scrapy
+crawls/
+结果文件/
 
 # Sphinx documentation
 docs/_build/

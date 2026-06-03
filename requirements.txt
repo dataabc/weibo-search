@@ -1,1 +1,4 @@
+Scrapy>=2.11,<3
+requests>=2.31,<3
 Pillow>=8.1.1
+pytest>=8,<9
