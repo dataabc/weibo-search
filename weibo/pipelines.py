@@ -18,6 +18,14 @@ from scrapy.utils.project import get_project_settings
 settings = get_project_settings()
 
 
+def normalize_pics(pics):
+    if not pics:
+        return ''
+    if isinstance(pics, str):
+        return pics
+    return ','.join(pics)
+
+
 class CsvPipeline(object):
     def process_item(self, item, spider):
         base_dir = '结果文件' + os.sep + item['keyword']
@@ -56,7 +64,7 @@ class CsvPipeline(object):
                     item['weibo'].get('attitudes_count', ''),
                     item['weibo'].get('created_at', ''),
                     item['weibo'].get('source', ''),
-                    ','.join(item['weibo'].get('pics', [])),
+                    normalize_pics(item['weibo'].get('pics', [])),
                     item['weibo'].get('video_url', ''),
                     item['weibo'].get('retweet_id', ''),
                     item['weibo'].get('ip', ''),
@@ -105,13 +113,13 @@ class SQLitePipeline(object):
             self.cursor.execute(sql)
             self.conn.commit()
         except Exception as e:
-            print(f"SQLite数据库创建失败: {e}")
-            spider.sqlite_error = True
+            spider.logger.error("SQLite数据库创建失败: %s", e)
+            spider.sqlite3_error = True
 
 
     def process_item(self, item, spider):
         data = dict(item['weibo'])
-        data['pics'] = ','.join(data['pics'])
+        data['pics'] = normalize_pics(data.get('pics', []))
         keys = ', '.join(data.keys())
         placeholders = ', '.join(['?'] * len(data))
         sql = f"""INSERT OR REPLACE INTO weibo ({keys}) 
@@ -120,12 +128,14 @@ class SQLitePipeline(object):
             self.cursor.execute(sql, tuple(data.values()))
             self.conn.commit()
         except Exception as e:
-            print(f"SQLite保存出错: {e}")
-            spider.sqlite_error = True
+            spider.logger.error("SQLite保存出错: %s", e)
+            spider.sqlite3_error = True
             self.conn.rollback()
+        return item
 
     def close_spider(self, spider):
-        self.conn.close()
+        if hasattr(self, 'conn'):
+            self.conn.close()
 
 class MyImagesPipeline(ImagesPipeline):
     def get_media_requests(self, item, info):
@@ -266,7 +276,7 @@ class MysqlPipeline(object):
 
     def process_item(self, item, spider):
         data = dict(item['weibo'])
-        data['pics'] = ','.join(data['pics'])
+        data['pics'] = normalize_pics(data.get('pics', []))
         keys = ', '.join(data.keys())
         values = ', '.join(['%s'] * len(data))
         sql = """INSERT INTO {table}({keys}) VALUES ({values}) ON
